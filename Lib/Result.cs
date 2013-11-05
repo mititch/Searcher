@@ -23,7 +23,7 @@ namespace Lib
 
         private readonly String searchLine;
 
-        private Boolean isAlive = false;
+        private Boolean isAlive = true;
 
         private Int32 value;
 
