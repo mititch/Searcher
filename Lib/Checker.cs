@@ -65,11 +65,10 @@ namespace Lib
         /// <param name="prevTuner">Reference to previous tuner</param>
         /// <param name="factory">TaskFactory for creation new Tasks</param>
         /// <returns>Reference to Tuner object, must be send to next Checker</returns>
-        internal Tuner Check(String searchLine, Result result,
-                           Tuner prevTuner, TaskFactory factory)
+        internal Tuner Check(Tuner prevTuner, TaskFactory factory, Result result)
         {
 
-            Tuner thisTuner = inTune == 0 ? new Tuner(this, searchLine, result) : null;
+            Tuner thisTuner = inTune == 0 ? new Tuner(this, result) : null;
 
             factory.StartNew(() =>
             {
@@ -100,11 +99,11 @@ namespace Lib
                     if (hashtable != null)
                     {
                         // Hashtable is ready
-                        ReadFromHashtable(searchLine, hashtable, result, ref thisTuner);
+                        ReadFromHashtable(hashtable, result, ref thisTuner);
                     }
                     else
                     {
-                        hashtable = this.Parse(searchLine, result, thisTuner, prevTuner, token);
+                        hashtable = this.Parse(result, thisTuner, prevTuner, token);
                         this.hashtableWeakReference.Target = hashtable;
                     }
 
@@ -116,7 +115,7 @@ namespace Lib
 
                     lockS.EnterReadLock();
 
-                    ReadFromHashtable(searchLine, hashtable, result, ref thisTuner);
+                    ReadFromHashtable(hashtable, result, ref thisTuner);
 
                     lockS.ExitReadLock();
                 }
@@ -143,10 +142,9 @@ namespace Lib
         /// and update Result of search
         /// </summary>
         /// <param name="nextCheckerFirstSubline">Part of line given by next Checker</param>
-        /// <param name="searchLine">Search text</param>
         /// <param name="result">Result reference</param>
         /// <param name="thisHashtable">Hastable referance</param>
-        internal void Tune(String nextCheckerFirstSubline, String searchLine,
+        internal void Tune(String nextCheckerFirstSubline, 
                  Result result, Hashtable thisHashtable)
         {
             String concantinatedLine = lastSubline + nextCheckerFirstSubline;
@@ -156,13 +154,13 @@ namespace Lib
                 // Executed only once, only one tuner can arive this code
                 lockS.EnterWriteLock();
                 this.count = this.count + nextCheckerFirstSubline.Length;
-                DoLineCheck(concantinatedLine, searchLine, result, thisHashtable);
+                DoLineCheck(concantinatedLine, result, thisHashtable);
                 lockS.ExitWriteLock();
             }
             else
             {
                 // Check but not update hashtable
-                DoLineCheck(concantinatedLine, searchLine, result, null);
+                DoLineCheck(concantinatedLine, result, null);
             }
 
         }
@@ -170,16 +168,14 @@ namespace Lib
         /// <summary>
         /// Parse the part of file and update Result object and hachtable
         /// </summary>
-        /// <param name="searchLine">Search text</param>
         /// <param name="result">Result reference</param>
         /// <param name="thisTuner">Reference to this Tuner</param>
         /// <param name="prevTuner">Reference to previous Tuner</param>
         /// <param name="token">Cancellation Token</param>
         /// <returns>Referance to hashtable</returns>
-        private Hashtable Parse(String searchLine, Result result, Tuner thisTuner,
+        private Hashtable Parse(Result result, Tuner thisTuner,
                                 Tuner prevTuner, CancellationToken token)
         {
-
             // Make one more check
             Hashtable hashtable = new Hashtable();
             using (Stream stream = this.GetStream())
@@ -198,7 +194,7 @@ namespace Lib
                     }
                     else
                     {
-                        DoLineCheck(line, searchLine, result, hashtable);
+                        DoLineCheck(line, result, hashtable);
                     }
                     this.firstCall = false;
                     // Now execution can be canceled
@@ -218,7 +214,7 @@ namespace Lib
                         if (!streamReader.EndOfStream)
                         {
                             // Process all string but not last one
-                            DoLineCheck(line, searchLine, result, hashtable);
+                            DoLineCheck(line, result, hashtable);
                         }
                         else
                         {
@@ -240,7 +236,7 @@ namespace Lib
                     {
                         // Tune is done - process last line
                         // Hastable was collect, but offset and byte count already changed
-                        DoLineCheck(line, searchLine, result, hashtable);
+                        DoLineCheck(line, result, hashtable);
                     }
                 }
 
@@ -257,7 +253,7 @@ namespace Lib
         /// <param name="hashtable">Referance to collection</param>
         /// <param name="result">Reserence to result</param>
         /// <param name="thisTuner">Tnis object tuner</param>
-        private void ReadFromHashtable(String searchLine, Hashtable hashtable,
+        private void ReadFromHashtable(Hashtable hashtable,
                                        Result result, ref Tuner thisTuner)
         {
             // If checker become intune 
@@ -268,9 +264,9 @@ namespace Lib
             }
 
             // Get result from hashtable
-            if (hashtable.Contains(searchLine))
+            if (hashtable.Contains(result.SearchLine))
             {
-                result.Increace((int)hashtable[searchLine]);
+                result.Increace((int)hashtable[result.SearchLine]);
             }
 
         }
@@ -279,18 +275,16 @@ namespace Lib
         /// Check one line
         /// </summary>
         /// <param name="line">Line from file</param>
-        /// <param name="searchLine">Search text</param>
         /// <param name="result">Reserence to Result object</param>
         /// <param name="hashtable">Referance to collection</param>
-        private void DoLineCheck(String line, String searchLine,
+        private void DoLineCheck(String line, 
                                  Result result, Hashtable hashtable)
         {
 
             // Update result manual
-            if (result != null && String.Equals(line, searchLine))
+            if (result != null && String.Equals(line, result.SearchLine))
             {
                 result.Increace();
-
             }
 
             // Try update hashtable 

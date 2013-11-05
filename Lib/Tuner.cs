@@ -28,8 +28,6 @@ namespace Lib
 
         private Result result;
 
-        private readonly String searchLine;
-        
         private String secondLine;
 
         /// <summary>
@@ -38,11 +36,10 @@ namespace Lib
         /// <param name="checker">Checker object which should be tuned</param>
         /// <param name="searchLine">Current search text</param>
         /// <param name="result">Result object which collect search results</param>
-        internal Tuner(Checker checker, String searchLine, Result result)
+        internal Tuner(Checker checker, Result result)
         {
             this.checker = checker;
             this.result = result;
-            this.searchLine = searchLine;
         }
 
         /// <summary>
@@ -76,7 +73,7 @@ namespace Lib
         {
             if (Interlocked.Increment(ref this.locksCount) > 1)
             {
-                checker.Tune(secondLine, searchLine, result, hashtableRef);
+                checker.Tune(secondLine, result, hashtableRef);
                 this.hashtableRef = null;
                 //Now hastable has no roots
             }

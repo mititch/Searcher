@@ -19,27 +19,31 @@ namespace Lib
 
     public class Result : IDisposable
     {
-        private readonly CancellationTokenSource tokenSource;
-        
-        private Boolean isAlive;
+        private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+        private readonly String searchLine;
+
+        private Boolean isAlive = false;
 
         private Int32 value;
-
-        public int Value
-        {
-            get
-            {
-                return value;
-            }
-        }
 
         /// <summary>
         /// Greate instance of Result class
         /// </summary>
-        public Result()
+        /// <param name="searchLine">Search text</param>
+        internal Result(string searchLine)
         {
-            this.isAlive = true;
-            this.tokenSource = new CancellationTokenSource();
+            this.searchLine = searchLine;
+        }
+
+        public String SearchLine
+        {
+            get { return this.searchLine; }
+        }
+
+        public int Value
+        {
+            get { return value; }
         }
 
         /// <summary>

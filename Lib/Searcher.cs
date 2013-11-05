@@ -57,7 +57,7 @@ namespace Lib
         public Result Search(String searchLine)
         {
            
-            Result result = new Result();
+            Result result = new Result(searchLine);
 
             TaskFactory factory = new TaskFactory(TaskScheduler.Current);
 
@@ -79,7 +79,7 @@ namespace Lib
                     }
                     Checker currentChecker = checkers[i];
                     Tuner prevTuner = tuner;
-                    tuner = currentChecker.Check(searchLine, result, prevTuner, factory);
+                    tuner = currentChecker.Check(prevTuner, factory, result);
                 }
                 
                 if (tuner != null)
