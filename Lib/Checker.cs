@@ -65,12 +65,12 @@ namespace Lib
         /// <param name="prevTuner">Reference to previous tuner</param>
         /// <param name="factory">TaskFactory for creation new Tasks</param>
         /// <returns>Reference to Tuner object, must be send to next Checker</returns>
-        internal Tuner Check(Tuner prevTuner, TaskFactory factory, Result result)
+        internal Tuner Check(Tuner prevTuner,  Result result)
         {
 
             Tuner thisTuner = inTune == 0 ? new Tuner(this, result) : null;
 
-            factory.StartNew(() =>
+            Task.Factory.StartNew(() =>
             {
                 CancellationToken token;
 
@@ -249,7 +249,6 @@ namespace Lib
         /// <summary>
         /// Find line in Hashable and udpate Result
         /// </summary>
-        /// <param name="searchLine">Search text</param>
         /// <param name="hashtable">Referance to collection</param>
         /// <param name="result">Reserence to result</param>
         /// <param name="thisTuner">Tnis object tuner</param>

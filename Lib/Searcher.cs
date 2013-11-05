@@ -59,9 +59,9 @@ namespace Lib
            
             Result result = new Result(searchLine);
 
-            TaskFactory factory = new TaskFactory(TaskScheduler.Current);
+            //TaskFactory factory = new TaskFactory(TaskScheduler.Current);
 
-            factory.StartNew(() =>
+            Task.Factory.StartNew(() =>
             {
                 CancellationToken token;
                 if (!result.TryGetToken(out token))
@@ -79,7 +79,7 @@ namespace Lib
                     }
                     Checker currentChecker = checkers[i];
                     Tuner prevTuner = tuner;
-                    tuner = currentChecker.Check(prevTuner, factory, result);
+                    tuner = currentChecker.Check(prevTuner, result);
                 }
                 
                 if (tuner != null)

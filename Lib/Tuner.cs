@@ -26,7 +26,7 @@ namespace Lib
 
         private Hashtable hashtableRef;
 
-        private Result result;
+        private readonly Result result;
 
         private String secondLine;
 
@@ -34,7 +34,6 @@ namespace Lib
         /// Get instance of Tuner class
         /// </summary>
         /// <param name="checker">Checker object which should be tuned</param>
-        /// <param name="searchLine">Current search text</param>
         /// <param name="result">Result object which collect search results</param>
         internal Tuner(Checker checker, Result result)
         {

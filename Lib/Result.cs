@@ -16,6 +16,7 @@ namespace Lib
     using System.Linq;
     using System.Text;
     using System.Threading;
+    using System.Threading.Tasks;
 
     public class Result : IDisposable
     {
@@ -63,7 +64,6 @@ namespace Lib
         internal Boolean TryGetToken(out CancellationToken token)
         {
             token = isAlive ? tokenSource.Token : CancellationToken.None;
-            
             return this.isAlive;
         }
 

@@ -26,7 +26,7 @@ namespace FileSearch
 
     public partial class FileSearch : Form
     {
-        private const Int32 THREAD_COUNT = 6;
+        private const Int32 THREAD_COUNT = 5;
         
         private const Int32 ELEMENT_COUNT = 5;
         
