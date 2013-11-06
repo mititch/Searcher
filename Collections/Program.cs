@@ -50,7 +50,8 @@
                     {
                         String line = streamReader.ReadLine();
                         Object prevValue = collection[line];
-                        collection[line] = prevValue == null ? 1 : (Int32)prevValue + 1;
+                        collection[line] = prevValue == null 
+                            ? 1 : (Int32)prevValue + 1;
                     }
                 }
             })
@@ -116,7 +117,8 @@
                     {
                         String line = streamReader.ReadLine();
                         Object prevValue = collection[line];
-                        collection[line] = prevValue == null ? 1 : (Int32)prevValue + 1;
+                        collection[line] = prevValue == null 
+                            ? 1 : (Int32)prevValue + 1;
                     }
                 }
             })

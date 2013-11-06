@@ -275,7 +275,8 @@ namespace Lib
         /// <param name="result">Reserence to Result</param>
         /// <param name="thisTuner">Tnis object Tuner</param>
         /// <param name="hashtable">Reference to collection</param>
-        private Boolean TryReadFromHashtable(Result result, ref Tuner thisTuner, out Hashtable hashtable)
+        private Boolean TryReadFromHashtable(Result result, ref Tuner thisTuner,
+            out Hashtable hashtable)
         {
             Boolean success = false;
             

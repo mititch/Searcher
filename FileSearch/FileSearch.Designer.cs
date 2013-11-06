@@ -286,7 +286,6 @@
             this.label1.Size = new System.Drawing.Size(26, 13);
             this.label1.TabIndex = 25;
             this.label1.Text = "File:";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
             // filenameBox
             // 

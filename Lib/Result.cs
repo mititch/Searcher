@@ -20,7 +20,8 @@ namespace Lib
 
         private readonly String searchLine;
         
-        private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource tokenSource = 
+            new CancellationTokenSource();
 
         private Int32 value = 0;
 

@@ -12,15 +12,8 @@
 namespace FileSearch
 {
     using System;
-    using System.Collections.Generic;
-    using System.ComponentModel;
-    using System.Data;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
-    using System.Linq.Expressions;
-    using System.Reflection;
-    using System.Text;
     using System.Windows.Forms;
     using Lib;
     using Visual;
@@ -203,11 +196,6 @@ namespace FileSearch
         private void FileSearch_FormClosed(object sender, FormClosedEventArgs e)
         {
             this.searcher.Dispose();
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void generate_Click(object sender, EventArgs e)

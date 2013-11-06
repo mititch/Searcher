@@ -69,10 +69,7 @@ namespace Lib
         {
             if (Interlocked.Increment(ref this.locksCount) > 1)
             {
-                if (locksCount != 2)
-                {
-                }
-                checker.Tune(secondLine, result, hashtableReferance);
+                this.checker.Tune(secondLine, result, hashtableReferance);
                 this.hashtableReferance = null;
                 //Now hastable has no roots
             }
