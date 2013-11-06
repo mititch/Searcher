@@ -90,13 +90,7 @@ namespace Lib
                     }
                     
                     // Make one more check
-                    hashtable = hashtableWeakReference.Target as Hashtable;
-                    if (hashtable != null)
-                    {
-                        // Hashtable is exist 
-                        ReadFromHashtable(hashtable, result, ref thisTuner);
-                    }
-                    else
+                    if (!TryReadFromHashtable(result, ref thisTuner))
                     {
                         hashtable = this.Parse(result, thisTuner, prevTuner, token);
                         this.hashtableWeakReference.Target = hashtable;
@@ -114,17 +108,20 @@ namespace Lib
 
                     lockSlim.ExitReadLock();
                 }
-
-                if (prevTuner != null)
+                if (!token.IsCancellationRequested)
                 {
-                    // Send subline to previous Tuner
-                    prevTuner.SetSecond(this.firstSubline);
-                }
 
-                if (thisTuner != null)
-                {
-                    // Send reference to hashtable to the Tuner
-                    thisTuner.SetFirst(hashtable);
+                    if (prevTuner != null)
+                    {
+                        // Send subline to previous Tuner
+                        prevTuner.SetSecond(this.firstSubline);
+                    }
+
+                    if (thisTuner != null)
+                    {
+                        // Send reference to hashtable to the Tuner
+                        thisTuner.SetFirst(hashtable);
+                    }
                 }
             });
 
@@ -249,6 +246,7 @@ namespace Lib
         private void ReadFromHashtable(Hashtable hashtable,
                                        Result result, ref Tuner thisTuner)
         {
+           
             // If checker become intune 
             if (this.inTune == 1)
             {
@@ -261,6 +259,28 @@ namespace Lib
             {
                 result.Increace((int)hashtable[result.SearchLine]);
             }
+
+        }
+
+        /// <summary>
+        /// Trying find line in Hashable and udpate Result
+        /// </summary>
+        /// <param name="result">Reserence to Result</param>
+        /// <param name="thisTuner">Tnis object Tuner</param>
+        private Boolean TryReadFromHashtable(Result result, ref Tuner thisTuner)
+        {
+            Boolean success = false;
+            
+            var hashtable = hashtableWeakReference.Target as Hashtable;
+            
+            if (hashtable != null)
+            {
+                // Hashtable is exist 
+                ReadFromHashtable(hashtable, result, ref thisTuner);
+                success = true;
+            }
+
+            return success;
 
         }
 

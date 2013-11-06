@@ -37,7 +37,7 @@ namespace Lib
             FileInfo file = new FileInfo(fileName);
             
             Int32 bufferSize = Convert.ToInt32(
-                Math.Round(Decimal.Divide(file.Length, partsCount)) + 1);
+                Math.Round(Decimal.Divide(file.Length, partsCount), MidpointRounding.ToEven) + 1);
 
             this.checkers = new Checker[partsCount];
             
@@ -72,7 +72,7 @@ namespace Lib
                 {
                     if (token.IsCancellationRequested)
                     {
-                        continue;
+                        return;
                     }
                     Checker currentChecker = checkers[i];
                     Tuner prevTuner = tuner;

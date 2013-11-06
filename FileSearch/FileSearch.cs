@@ -120,7 +120,8 @@ namespace FileSearch
             vb.SearchBtn.Enabled = true;
             vb.CancelBtn.Enabled = false;
             vb.Result.Cancel();
-            vb.Result.Dispose(); 
+            //TODO: dispose after cancel all
+            //vb.Result.Dispose(); 
             vb.Result = null;
         }
 
