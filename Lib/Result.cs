@@ -12,11 +12,7 @@
 namespace Lib
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
 
     public class Result : IDisposable
     {
@@ -35,6 +31,15 @@ namespace Lib
         internal Result(string searchLine)
         {
             this.searchLine = searchLine;
+        }
+
+        /// <summary>
+        /// Releases instance resources
+        /// </summary>
+        public void Dispose()
+        {
+            this.isAlive = false;
+            tokenSource.Dispose();
         }
 
         public String SearchLine
@@ -82,15 +87,6 @@ namespace Lib
         {
             token = isAlive ? tokenSource.Token : CancellationToken.None;
             return this.isAlive;
-        }
-
-        /// <summary>
-        /// Releases instance resources
-        /// </summary>
-        public void Dispose()
-        {
-            this.isAlive = false;
-            tokenSource.Dispose();
         }
 
     }

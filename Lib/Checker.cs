@@ -39,7 +39,7 @@ namespace Lib
         private readonly ReaderWriterLockSlim lockSlim = 
             new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-        private Int32 offset;
+        private readonly Int32 offset;
 
         /// <summary>
         /// Creates an instance of Сhecker class
@@ -55,27 +55,28 @@ namespace Lib
         }
 
         /// <summary>
+        /// Releases instance resources
+        /// </summary>
+        public void Dispose()
+        {
+            this.lockSlim.Dispose();
+        }
+
+        /// <summary>
         /// Checks the part of file and compare lines with search string
         /// </summary>
         /// <param name="prevTuner">Reference to previous Tuner</param>
         /// <param name="result">Reference to Result</param>
+        /// <param name="token">Cancellation token</param>
         /// <returns>Reference to new Tuner object, must be send to the next Checker</returns>
-        internal Tuner Check(Tuner prevTuner,  Result result)
+        internal Tuner Check(Tuner prevTuner,  Result result, CancellationToken token)
         {
 
             Tuner thisTuner = inTune == 0 ? new Tuner(this, result) : null;
 
             Task.Factory.StartNew(() =>
             {
-                CancellationToken token;
 
-                if (!result.TryGetToken(out token))
-                {
-                    // No token - no results
-                    return;
-                }
-
-                // Get hastable link.
                 var hashtable = hashtableWeakReference.Target as Hashtable;
                 // Hashtable can not be collect now
 
@@ -86,11 +87,12 @@ namespace Lib
 
                     if (token.IsCancellationRequested)
                     {
+                        lockSlim.ExitWriteLock();
                         return;
                     }
-                    
+
                     // Make one more check
-                    if (!TryReadFromHashtable(result, ref thisTuner))
+                    if (!TryReadFromHashtable(result, ref thisTuner, out hashtable))
                     {
                         hashtable = this.Parse(result, thisTuner, prevTuner, token);
                         this.hashtableWeakReference.Target = hashtable;
@@ -108,22 +110,20 @@ namespace Lib
 
                     lockSlim.ExitReadLock();
                 }
-                if (!token.IsCancellationRequested)
+                
+                if (prevTuner != null)
                 {
-
-                    if (prevTuner != null)
-                    {
-                        // Send subline to previous Tuner
-                        prevTuner.SetSecond(this.firstSubline);
-                    }
-
-                    if (thisTuner != null)
-                    {
-                        // Send reference to hashtable to the Tuner
-                        thisTuner.SetFirst(hashtable);
-                    }
+                    // Send subline to previous Tuner
+                    prevTuner.SetTuner(this.firstSubline);
                 }
-            });
+
+                if (thisTuner != null && hashtable != null)
+                {
+                    // Send reference to hashtable to the Tuner
+                    thisTuner.RequestTune(hashtable);
+                }
+
+            }, token);
 
             return thisTuner;
 
@@ -133,9 +133,9 @@ namespace Lib
         /// If the object has not been tuned does it 
         /// and makes updating of the search Result
         /// </summary>
-        /// <param name="nextCheckerFirstSubline">Part of the line obtained from the previous Checker</param>
+        /// <param name="nextCheckerFirstSubline">Subline from the previous Checker</param>
         /// <param name="result">Reference to Result</param>
-        /// <param name="thisHashtable">Reference  to Hastable </param>
+        /// <param name="thisHashtable">Reference to Hashtable </param>
         internal void Tune(String nextCheckerFirstSubline, 
                  Result result, Hashtable thisHashtable)
         {
@@ -145,8 +145,10 @@ namespace Lib
             {
                 // Executed only once, This code can be achieved by only one Tuner
                 lockSlim.EnterWriteLock();
+
                 this.count = this.count + nextCheckerFirstSubline.Length;
                 DoLineCheck(concantinatedLine, result, thisHashtable);
+
                 lockSlim.ExitWriteLock();
             }
             else
@@ -194,12 +196,7 @@ namespace Lib
                     Boolean done = streamReader.EndOfStream;
                     while (!done)
                     {
-                        if (token.IsCancellationRequested)
-                        {
-                            // Do not save broken hashtable
-                            return null;
-                        }
-
+                        
                         line = streamReader.ReadLine();
 
                         if (!streamReader.EndOfStream)
@@ -212,22 +209,32 @@ namespace Lib
                             done = true;
                         }
 
+                        if (token.IsCancellationRequested)
+                        {
+                            // Do not save broken hashtable
+                            hashtable = null;
+                            done = true;
+                        }
+
                     }
 
-                    // Process last line
-                    if (this.inTune == 0)
+                    if (!token.IsCancellationRequested)
                     {
-                        //Save last string
-                        this.lastSubline = line;
-                    }
+                        // Process last line
+                        if (this.inTune == 0)
+                        {
+                            //Save last string
+                            this.lastSubline = line;
+                        }
 
-                    // If tuner stil alive he should process this line,
-                    // even if checker already in tune
-                    if (thisTuner == null)
-                    {
-                        // Tune is done - process last line
-                        // Hastable was collect, but offset and byte count already changed
-                        DoLineCheck(line, result, hashtable);
+                        // If tuner stil alive he should process this line,
+                        // even if checker already in tune
+                        if (thisTuner == null)
+                        {
+                            // Tune is done - process last line
+                            // Hastable was collect, but offset and byte count already changed
+                            DoLineCheck(line, result, hashtable);
+                        }
                     }
                 }
 
@@ -267,11 +274,12 @@ namespace Lib
         /// </summary>
         /// <param name="result">Reserence to Result</param>
         /// <param name="thisTuner">Tnis object Tuner</param>
-        private Boolean TryReadFromHashtable(Result result, ref Tuner thisTuner)
+        /// <param name="hashtable">Reference to collection</param>
+        private Boolean TryReadFromHashtable(Result result, ref Tuner thisTuner, out Hashtable hashtable)
         {
             Boolean success = false;
             
-            var hashtable = hashtableWeakReference.Target as Hashtable;
+            hashtable = hashtableWeakReference.Target as Hashtable;
             
             if (hashtable != null)
             {
@@ -334,12 +342,5 @@ namespace Lib
 
         }
         
-        /// <summary>
-        /// Releases instance resources
-        /// </summary>
-        public void Dispose()
-        {
-            this.lockSlim.Dispose();
-        }
     }
 }

@@ -52,6 +52,10 @@
             this.startAll = new System.Windows.Forms.Button();
             this.collect = new System.Windows.Forms.Button();
             this.clear = new System.Windows.Forms.Button();
+            this.cancelAll = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.filenameBox = new System.Windows.Forms.TextBox();
+            this.generate = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox1
@@ -246,7 +250,7 @@
             // 
             // collect
             // 
-            this.collect.Location = new System.Drawing.Point(174, 217);
+            this.collect.Location = new System.Drawing.Point(336, 217);
             this.collect.Name = "collect";
             this.collect.Size = new System.Drawing.Size(75, 23);
             this.collect.TabIndex = 22;
@@ -264,11 +268,52 @@
             this.clear.UseVisualStyleBackColor = true;
             this.clear.Click += new System.EventHandler(this.clear_Click);
             // 
+            // cancelAll
+            // 
+            this.cancelAll.Location = new System.Drawing.Point(174, 217);
+            this.cancelAll.Name = "cancelAll";
+            this.cancelAll.Size = new System.Drawing.Size(75, 23);
+            this.cancelAll.TabIndex = 24;
+            this.cancelAll.Text = "Cancel All";
+            this.cancelAll.UseVisualStyleBackColor = true;
+            this.cancelAll.Click += new System.EventHandler(this.cancelAll_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(489, 222);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(26, 13);
+            this.label1.TabIndex = 25;
+            this.label1.Text = "File:";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
+            // 
+            // filenameBox
+            // 
+            this.filenameBox.Location = new System.Drawing.Point(521, 219);
+            this.filenameBox.Name = "filenameBox";
+            this.filenameBox.Size = new System.Drawing.Size(306, 20);
+            this.filenameBox.TabIndex = 26;
+            // 
+            // generate
+            // 
+            this.generate.Location = new System.Drawing.Point(833, 217);
+            this.generate.Name = "generate";
+            this.generate.Size = new System.Drawing.Size(75, 23);
+            this.generate.TabIndex = 27;
+            this.generate.Text = "Generate";
+            this.generate.UseVisualStyleBackColor = true;
+            this.generate.Click += new System.EventHandler(this.generate_Click);
+            // 
             // FileSearch
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1002, 261);
+            this.Controls.Add(this.generate);
+            this.Controls.Add(this.filenameBox);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.cancelAll);
             this.Controls.Add(this.clear);
             this.Controls.Add(this.collect);
             this.Controls.Add(this.startAll);
@@ -295,6 +340,7 @@
             this.Controls.Add(this.textBox1);
             this.Name = "FileSearch";
             this.Text = "File search";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FileSearch_FormClosed);
             this.Load += new System.EventHandler(this.FileSearch_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -327,6 +373,10 @@
         private System.Windows.Forms.Button startAll;
         private System.Windows.Forms.Button collect;
         private System.Windows.Forms.Button clear;
+        private System.Windows.Forms.Button cancelAll;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox filenameBox;
+        private System.Windows.Forms.Button generate;
     }
 }
 

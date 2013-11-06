@@ -16,6 +16,7 @@ namespace FileSearch
     using System.ComponentModel;
     using System.Data;
     using System.Drawing;
+    using System.IO;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
@@ -31,7 +32,8 @@ namespace FileSearch
 
         private const string FILE_NAME = "C:/Users/mititch/Downloads/bf/f2.txt";
 
-        private const string SOME_STRING = "have very many outstanding loans but I do need to consolidate and move ";
+        private const string SOME_STRING = 
+            "have very many outstanding loans but I do need to consolidate and move ";
 
         private const Int32 THREAD_COUNT = 5;
         
@@ -45,8 +47,7 @@ namespace FileSearch
         private readonly VisualBinding[] visualBindings = 
             new VisualBinding[ELEMENT_COUNT];
 
-        private readonly Searcher searcher = 
-            new Searcher(FILE_NAME, THREAD_COUNT);
+        private Searcher searcher = new Searcher(FILE_NAME, THREAD_COUNT);
         
         /// <summary>
         /// Creates an instance of the FileSearch form
@@ -63,6 +64,8 @@ namespace FileSearch
         /// <param name="e">Arguments</param>
         private void FileSearch_Load(object sender, EventArgs e)
         {
+            filenameBox.Text = FILE_NAME;
+            
             this.visualBindings[0] = new VisualBinding
             {
                 TextBox = this.textBox1,
@@ -116,18 +119,24 @@ namespace FileSearch
 
         void CancelBtn_Click(object sender, EventArgs e)
         {
-            VisualBinding vb = visualBindings.FirstOrDefault(x => x.CancelBtn.Equals((Button)sender));
-            vb.SearchBtn.Enabled = true;
-            vb.CancelBtn.Enabled = false;
-            vb.Result.Cancel();
-            //TODO: dispose after cancel all
-            //vb.Result.Dispose(); 
-            vb.Result = null;
+            VisualBinding visualBinding = 
+                visualBindings.FirstOrDefault(x => x.CancelBtn.Equals((Button)sender));
+            CancelAction(visualBinding);
+        }
+
+        void CancelAction(VisualBinding visualBinding)
+        {
+            visualBinding.SearchBtn.Enabled = true;
+            visualBinding.CancelBtn.Enabled = false;
+            visualBinding.Result.Cancel();
+            visualBinding.Result.Dispose();
+            visualBinding.Result = null;
         }
 
         void  SearchBtn_Click(object sender, EventArgs e)
         {
-            VisualBinding vb = visualBindings.FirstOrDefault(x => x.SearchBtn.Equals((Button) sender));
+            VisualBinding vb = visualBindings.
+                FirstOrDefault(x => x.SearchBtn.Equals((Button) sender));
             vb.SearchBtn.Enabled = false;
             vb.CancelBtn.Enabled = true;
             vb.Result = this.searcher.Search(vb.TextBox.Text);
@@ -148,7 +157,8 @@ namespace FileSearch
                 {
                     visualBinding.SearchBtn.Enabled = false;
                     visualBinding.CancelBtn.Enabled = true;
-                    visualBinding.Result = this.searcher.Search(visualBinding.TextBox.Text);
+                    visualBinding.Result = this.searcher.
+                        Search(visualBinding.TextBox.Text);
                 }
             }
         }
@@ -178,6 +188,59 @@ namespace FileSearch
             }
         }
 
+        private void cancelAll_Click(object sender, EventArgs e)
+        {
+            foreach (var visualBinding in visualBindings)
+            {
+                Result result = visualBinding.Result;
+                if (result != null)
+                {
+                    CancelAction(visualBinding);
+                }
+            }
+        }
 
+        private void FileSearch_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            this.searcher.Dispose();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void generate_Click(object sender, EventArgs e)
+        {
+            if (this.searcher != null)
+            {
+                this.searcher.Dispose();
+            }
+            
+            String fileName = this.filenameBox.Text;
+
+            Button button = sender as Button;
+            button.Enabled = false;
+            button.Text = "working...";
+            
+            using (Stream stream = new FileStream(fileName, FileMode.CreateNew))
+            {
+                using (StreamWriter streamWriter = new StreamWriter(stream))
+                {
+                   
+                    for (Int32 i = 0; i < 10000000; i++)
+                    {
+                        streamWriter.WriteLine(String.Format("{0} {1}",
+                            SOME_STRING, this.random.Next(100)));
+                    }
+                    
+                }
+            }
+            this.searcher = new Searcher(fileName, THREAD_COUNT);
+            
+            button.Enabled = true;
+            button.Text = "Generate";
+
+        }
     }
 }

@@ -49,48 +49,6 @@ namespace Lib
         }
 
         /// <summary>
-        /// Makes the search in the file
-        /// </summary>
-        /// <param name="searchLine">Search text</param>
-        /// <returns>Reference to Result object</returns>
-        public Result Search(String searchLine)
-        {
-           
-            Result result = new Result(searchLine);
-
-            Task.Factory.StartNew(() =>
-            {
-                CancellationToken token;
-                if (!result.TryGetToken(out token))
-                {
-                    return;
-                }
-
-                //First checker has no previous checker with tuner
-                Tuner tuner = null;
-                for (Int32 i = 0; i < this.partsCount; i++)
-                {
-                    if (token.IsCancellationRequested)
-                    {
-                        return;
-                    }
-                    Checker currentChecker = checkers[i];
-                    Tuner prevTuner = tuner;
-                    tuner = currentChecker.Check(prevTuner, result);
-                }
-                
-                if (tuner != null)
-                {
-                    //Second subline in empty for the last Tuner
-                    tuner.SetSecond(String.Empty);
-                }
-                
-            });
-           
-            return result;
-        }
-
-        /// <summary>
         /// Releases instance resources
         /// </summary>
         public void Dispose()
@@ -100,5 +58,47 @@ namespace Lib
                 checker.Dispose();
             }
         }
+
+        /// <summary>
+        /// Makes the search in the file
+        /// </summary>
+        /// <param name="searchLine">Search text</param>
+        /// <returns>Reference to Result object</returns>
+        public Result Search(String searchLine)
+        {
+           
+            Result result = new Result(searchLine);
+
+            CancellationToken token;
+            if (result.TryGetToken(out token))
+            {
+                Task.Factory.StartNew(() =>
+                {
+
+                    //First checker has no previous checker with tuner
+                    Tuner tuner = null;
+                    for (Int32 i = 0; i < this.partsCount; i++)
+                    {
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                        Checker currentChecker = checkers[i];
+                        Tuner prevTuner = tuner;
+                        tuner = currentChecker.Check(prevTuner, result, token);
+                    }
+
+                    if (tuner != null)
+                    {
+                        //Second subline in empty for the last Tuner
+                        tuner.SetTuner(String.Empty);
+                    }
+
+                }, token);
+            }
+
+            return result;
+        }
+
     }
 }

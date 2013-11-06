@@ -13,18 +13,15 @@ namespace Lib
 {
     using System;
     using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
     using System.Threading;
 
     internal class Tuner 
     {
-        private Int32 locksCount;
-
         private readonly Checker checker;
 
-        private Hashtable hashtableRef;
+        private Hashtable hashtableReferance;
+
+        private Int32 locksCount;
 
         private readonly Result result;
 
@@ -45,11 +42,11 @@ namespace Lib
         /// One of two parts of tune process.
         /// Save root to hastable.
         /// </summary>
-        /// <param name="hashtable">Referece to checker hashtable</param>
-        internal void SetFirst(Hashtable hashtable)
+        /// <param name="hashtable">Referece to Checker hashtable</param>
+        internal void RequestTune(Hashtable hashtable)
         {
             // Checker ready for tune
-            this.hashtableRef = hashtable;
+            this.hashtableReferance = hashtable;
             this.CheckTuning();
         }
 
@@ -58,7 +55,7 @@ namespace Lib
         /// Save second substring of tune string.
         /// </summary>
         /// <param name="secondLine">Second part of tune string</param>
-        internal void SetSecond(String secondLine)
+        internal void SetTuner(String secondLine)
         {
             // The second part of the line obtained
             this.secondLine = secondLine;
@@ -72,8 +69,11 @@ namespace Lib
         {
             if (Interlocked.Increment(ref this.locksCount) > 1)
             {
-                checker.Tune(secondLine, result, hashtableRef);
-                this.hashtableRef = null;
+                if (locksCount != 2)
+                {
+                }
+                checker.Tune(secondLine, result, hashtableReferance);
+                this.hashtableReferance = null;
                 //Now hastable has no roots
             }
         }
