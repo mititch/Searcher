@@ -4,7 +4,7 @@
 // </copyright>
 //
 // <summary>
-//    Search strings in file.
+//    Search for a string in a file.
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -21,12 +21,12 @@ namespace Lib
 
     public class Searcher : IDisposable
     {
+        private readonly Checker[] checkers;
+        
         private readonly Int32 partsCount;
 
-        private readonly Checker[] checkers;
-
         /// <summary>
-        /// Create instance of Searcher object
+        /// Creates an instance of Searcher object
         /// </summary>
         /// <param name="fileName">File name</param>
         /// <param name="partsCount">Number of par for search</param>
@@ -37,8 +37,7 @@ namespace Lib
             FileInfo file = new FileInfo(fileName);
             
             Int32 bufferSize = Convert.ToInt32(
-                Math.Round(Decimal.Divide(file.Length, partsCount), MidpointRounding.ToEven)
-                + 1);
+                Math.Round(Decimal.Divide(file.Length, partsCount)) + 1);
 
             this.checkers = new Checker[partsCount];
             
@@ -50,7 +49,7 @@ namespace Lib
         }
 
         /// <summary>
-        /// Make search in file
+        /// Makes the search in the file
         /// </summary>
         /// <param name="searchLine">Search text</param>
         /// <returns>Reference to Result object</returns>
@@ -58,8 +57,6 @@ namespace Lib
         {
            
             Result result = new Result(searchLine);
-
-            //TaskFactory factory = new TaskFactory(TaskScheduler.Current);
 
             Task.Factory.StartNew(() =>
             {
@@ -69,7 +66,7 @@ namespace Lib
                     return;
                 }
 
-                //First checker has not previous checker with tuner
+                //First checker has no previous checker with tuner
                 Tuner tuner = null;
                 for (Int32 i = 0; i < this.partsCount; i++)
                 {
@@ -84,7 +81,7 @@ namespace Lib
                 
                 if (tuner != null)
                 {
-                    //Second subline in empty for last tuner
+                    //Second subline in empty for the last Tuner
                     tuner.SetSecond(String.Empty);
                 }
                 

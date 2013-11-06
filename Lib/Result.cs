@@ -20,16 +20,16 @@ namespace Lib
 
     public class Result : IDisposable
     {
-        private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
-
-        private readonly String searchLine;
-
         private Boolean isAlive = true;
 
-        private Int32 value;
+        private readonly String searchLine;
+        
+        private readonly CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+        private Int32 value = 0;
 
         /// <summary>
-        /// Greate instance of Result class
+        /// Creates an instance of Result class
         /// </summary>
         /// <param name="searchLine">Search text</param>
         internal Result(string searchLine)
@@ -48,7 +48,7 @@ namespace Lib
         }
 
         /// <summary>
-        /// Cancel search execution
+        /// Cancel of search execution
         /// </summary>
         public void Cancel()
         {
@@ -57,18 +57,7 @@ namespace Lib
         }
 
         /// <summary>
-        /// Try to get CancellationToken
-        /// </summary>
-        /// <param name="token">CancellationToken object</param>
-        /// <returns>True if token can be returned</returns>
-        internal Boolean TryGetToken(out CancellationToken token)
-        {
-            token = isAlive ? tokenSource.Token : CancellationToken.None;
-            return this.isAlive;
-        }
-
-        /// <summary>
-        /// Increasing the value of the result on one
+        /// Increasing of the result value on one
         /// </summary>
         internal void Increace()
         {
@@ -76,12 +65,23 @@ namespace Lib
         }
 
         /// <summary>
-        /// Increasing the value of the result on increment value
+        /// Increasing of the result value on increment value
         /// </summary>
-        /// <param name="increment">Value increment</param>
+        /// <param name="increment">Increment value</param>
         internal void Increace(Int32 increment)
         {
             Interlocked.Add(ref this.value, increment);
+        }
+
+        /// <summary>
+        /// Trying to get CancellationToken
+        /// </summary>
+        /// <param name="token">CancellationToken object</param>
+        /// <returns>True if token can be returned</returns>
+        internal Boolean TryGetToken(out CancellationToken token)
+        {
+            token = isAlive ? tokenSource.Token : CancellationToken.None;
+            return this.isAlive;
         }
 
         /// <summary>

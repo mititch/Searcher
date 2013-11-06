@@ -4,7 +4,7 @@
 // </copyright>
 //
 // <summary>
-//    Check last line. Can tune Checker object
+//    Check of the last line in block. Configures Checker object
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -31,7 +31,7 @@ namespace Lib
         private String secondLine;
 
         /// <summary>
-        /// Get instance of Tuner class
+        /// Creates an instance of Tuner class
         /// </summary>
         /// <param name="checker">Checker object which should be tuned</param>
         /// <param name="result">Result object which collect search results</param>
@@ -60,13 +60,13 @@ namespace Lib
         /// <param name="secondLine">Second part of tune string</param>
         internal void SetSecond(String secondLine)
         {
-            // Second part of string avaible
+            // The second part of the line obtained
             this.secondLine = secondLine;
             this.CheckTuning();
         }
 
         /// <summary>
-        /// If both conditions are ready make tune of Checker object
+        /// If both conditions are ready make tune of the Checker object
         /// </summary>
         private void CheckTuning()
         {

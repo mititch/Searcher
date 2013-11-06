@@ -26,33 +26,41 @@ namespace FileSearch
 
     public partial class FileSearch : Form
     {
-        private const Int32 THREAD_COUNT = 5;
-        
+
         private const Int32 ELEMENT_COUNT = 5;
-        
-        private const Int32 TIMER_INTERVAL = 500;
 
         private const string FILE_NAME = "C:/Users/mititch/Downloads/bf/f2.txt";
 
         private const string SOME_STRING = "have very many outstanding loans but I do need to consolidate and move ";
 
-        private System.Windows.Forms.Timer formTimer;
+        private const Int32 THREAD_COUNT = 5;
         
-        private readonly Random random;
+        private const Int32 TIMER_INTERVAL = 500;
 
-        private readonly VisualBinding[] visualBindings;
+        private System.Windows.Forms.Timer formTimer = 
+            new System.Windows.Forms.Timer();
 
-        private readonly Searcher searcher;
+        private readonly Random random = new Random();
+
+        private readonly VisualBinding[] visualBindings = 
+            new VisualBinding[ELEMENT_COUNT];
+
+        private readonly Searcher searcher = 
+            new Searcher(FILE_NAME, THREAD_COUNT);
         
+        /// <summary>
+        /// Creates an instance of the FileSearch form
+        /// </summary>
         public FileSearch()
         {
-            this.searcher = new Searcher(FILE_NAME, THREAD_COUNT);
-            this.formTimer = new System.Windows.Forms.Timer();
-            this.random = new Random();
-            this.visualBindings = new VisualBinding[ELEMENT_COUNT];
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Executed when the form loads
+        /// </summary>
+        /// <param name="sender">Sender</param>
+        /// <param name="e">Arguments</param>
         private void FileSearch_Load(object sender, EventArgs e)
         {
             this.visualBindings[0] = new VisualBinding
@@ -93,7 +101,8 @@ namespace FileSearch
 
             foreach (var visualBinding in visualBindings)
             {
-                visualBinding.TextBox.Text = String.Format("{0} {1}", SOME_STRING, random.Next(100));
+                visualBinding.TextBox.Text = String.Format("{0} {1}",
+                    SOME_STRING, random.Next(100));
                 visualBinding.CancelBtn.Enabled = false;
                 visualBinding.Label.Text = "0";
                 visualBinding.SearchBtn.Click += new EventHandler(SearchBtn_Click);

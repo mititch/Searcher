@@ -4,7 +4,7 @@
 // </copyright>
 //
 // <summary>
-//    Check the part of file.
+//    Checks the part of file.
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -19,52 +19,47 @@ namespace Lib
 
     internal class Checker : IDisposable
     {
-        private readonly ReaderWriterLockSlim lockS;
+        private Int32 count;
 
         private readonly String fileName;
 
-        private Int32 inTune;
-
-        private Int32 count;
-
-        private Int32 offset;
-
-        private Int32 innerOffset;
-
-        private Boolean firstCall;
-
-        private readonly WeakReference hashtableWeakReference;
+        private Boolean firstCall = true;
 
         private String firstSubline;
 
+        private readonly WeakReference hashtableWeakReference = 
+            new WeakReference(null, false);
+
+        private Int32 innerOffset = 0;
+
+        private Int32 inTune = 0;
+
         private String lastSubline;
 
+        private readonly ReaderWriterLockSlim lockSlim = 
+            new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        private Int32 offset;
+
         /// <summary>
-        /// Create instance of Checker object
+        /// Creates an instance of Сhecker class
         /// </summary>
         /// <param name="fileName">Name of file</param>
         /// <param name="offset">Start position</param>
         /// <param name="count">Bytes to read</param>
         internal Checker(string fileName, Int32 offset, Int32 count)
         {
-            this.firstCall = true;
             this.fileName = fileName;
             this.offset = offset;
-            this.innerOffset = 0;
             this.count = count;
-            this.inTune = 0;
-            this.hashtableWeakReference = new WeakReference(null, false);
-            lockS = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         }
 
         /// <summary>
-        /// Checking part of file and comparing lines with search string
+        /// Checks the part of file and compare lines with search string
         /// </summary>
-        /// <param name="searchLine">Search text</param>
+        /// <param name="prevTuner">Reference to previous Tuner</param>
         /// <param name="result">Reference to Result</param>
-        /// <param name="prevTuner">Reference to previous tuner</param>
-        /// <param name="factory">TaskFactory for creation new Tasks</param>
-        /// <returns>Reference to Tuner object, must be send to next Checker</returns>
+        /// <returns>Reference to new Tuner object, must be send to the next Checker</returns>
         internal Tuner Check(Tuner prevTuner,  Result result)
         {
 
@@ -87,7 +82,7 @@ namespace Lib
                 if (hashtable == null)
                 {
                     // Hashtable is not alive
-                    lockS.EnterWriteLock();
+                    lockSlim.EnterWriteLock();
 
                     if (token.IsCancellationRequested)
                     {
@@ -98,7 +93,7 @@ namespace Lib
                     hashtable = hashtableWeakReference.Target as Hashtable;
                     if (hashtable != null)
                     {
-                        // Hashtable is ready
+                        // Hashtable is exist 
                         ReadFromHashtable(hashtable, result, ref thisTuner);
                     }
                     else
@@ -107,28 +102,28 @@ namespace Lib
                         this.hashtableWeakReference.Target = hashtable;
                     }
 
-                    lockS.ExitWriteLock();
+                    lockSlim.ExitWriteLock();
                 }
                 else
                 {
-                    // Hashtable is alive, first and last substring is ready
+                    // Hashtable is alive, first and last substrings is set
 
-                    lockS.EnterReadLock();
+                    lockSlim.EnterReadLock();
 
                     ReadFromHashtable(hashtable, result, ref thisTuner);
 
-                    lockS.ExitReadLock();
+                    lockSlim.ExitReadLock();
                 }
 
                 if (prevTuner != null)
                 {
-                    // Send subline to previos tuner
+                    // Send subline to previous Tuner
                     prevTuner.SetSecond(this.firstSubline);
                 }
 
                 if (thisTuner != null)
                 {
-                    // Send referanse to hashtable to tuner
+                    // Send reference to hashtable to the Tuner
                     thisTuner.SetFirst(hashtable);
                 }
             });
@@ -138,12 +133,12 @@ namespace Lib
         }
 
         /// <summary>
-        /// If the object has not been tuned do it 
-        /// and update Result of search
+        /// If the object has not been tuned does it 
+        /// and makes updating of the search Result
         /// </summary>
-        /// <param name="nextCheckerFirstSubline">Part of line given by next Checker</param>
-        /// <param name="result">Result reference</param>
-        /// <param name="thisHashtable">Hastable referance</param>
+        /// <param name="nextCheckerFirstSubline">Part of the line obtained from the previous Checker</param>
+        /// <param name="result">Reference to Result</param>
+        /// <param name="thisHashtable">Reference  to Hastable </param>
         internal void Tune(String nextCheckerFirstSubline, 
                  Result result, Hashtable thisHashtable)
         {
@@ -151,11 +146,11 @@ namespace Lib
 
             if (Interlocked.CompareExchange(ref this.inTune, 1, 0) == 0)
             {
-                // Executed only once, only one tuner can arive this code
-                lockS.EnterWriteLock();
+                // Executed only once, This code can be achieved by only one Tuner
+                lockSlim.EnterWriteLock();
                 this.count = this.count + nextCheckerFirstSubline.Length;
                 DoLineCheck(concantinatedLine, result, thisHashtable);
-                lockS.ExitWriteLock();
+                lockSlim.ExitWriteLock();
             }
             else
             {
@@ -166,17 +161,16 @@ namespace Lib
         }
 
         /// <summary>
-        /// Parse the part of file and update Result object and hachtable
+        /// Parse the part of file and update Result object and hashtable
         /// </summary>
         /// <param name="result">Result reference</param>
         /// <param name="thisTuner">Reference to this Tuner</param>
         /// <param name="prevTuner">Reference to previous Tuner</param>
         /// <param name="token">Cancellation Token</param>
-        /// <returns>Referance to hashtable</returns>
+        /// <returns>Referеnce to hashtable</returns>
         private Hashtable Parse(Result result, Tuner thisTuner,
                                 Tuner prevTuner, CancellationToken token)
         {
-            // Make one more check
             Hashtable hashtable = new Hashtable();
             using (Stream stream = this.GetStream())
             {
@@ -187,7 +181,7 @@ namespace Lib
 
                     if (this.firstCall && prevTuner != null)
                     {
-                        // Take first string while first enter
+                        // Take the first line during the first pass
                                                                                                                                 
                         this.firstSubline = line;
                         this.innerOffset = String.IsNullOrEmpty(line) ? 0 : line.Length;
@@ -249,16 +243,16 @@ namespace Lib
         /// <summary>
         /// Find line in Hashable and udpate Result
         /// </summary>
-        /// <param name="hashtable">Referance to collection</param>
-        /// <param name="result">Reserence to result</param>
-        /// <param name="thisTuner">Tnis object tuner</param>
+        /// <param name="hashtable">Reference to collection</param>
+        /// <param name="result">Reserence to Result</param>
+        /// <param name="thisTuner">Tnis object Tuner</param>
         private void ReadFromHashtable(Hashtable hashtable,
                                        Result result, ref Tuner thisTuner)
         {
             // If checker become intune 
             if (this.inTune == 1)
             {
-                //We do not need tuner more
+                // We do not need of tuner more
                 thisTuner = null;
             }
 
@@ -274,8 +268,8 @@ namespace Lib
         /// Check one line
         /// </summary>
         /// <param name="line">Line from file</param>
-        /// <param name="result">Reserence to Result object</param>
-        /// <param name="hashtable">Referance to collection</param>
+        /// <param name="result">Reference to Result object</param>
+        /// <param name="hashtable">Reference to collection</param>
         private void DoLineCheck(String line, 
                                  Result result, Hashtable hashtable)
         {
@@ -325,7 +319,7 @@ namespace Lib
         /// </summary>
         public void Dispose()
         {
-            this.lockS.Dispose();
+            this.lockSlim.Dispose();
         }
     }
 }
