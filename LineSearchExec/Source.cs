@@ -88,7 +88,7 @@ namespace LineSearchExec
         /// Prepere source to use
         /// </summary>
         /// <returns></returns>
-        public Boolean PrepereSource()
+        public Boolean PrepareSource()
         {
             // Only one thread can enter
             if (Interlocked.Exchange(ref u_lock, 1) == 0)
@@ -137,7 +137,7 @@ namespace LineSearchExec
         {
             if (this.State != StorageState.Ready)
             {
-                this.PrepereSource();
+                this.PrepareSource();
             }
 
             // Return result of line count search

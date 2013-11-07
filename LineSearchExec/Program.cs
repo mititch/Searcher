@@ -38,6 +38,8 @@ namespace LineSearchExec
 
             Source source = new Source(FILE_NAME);
 
+            source.PrepereSource();
+
             Searcher searcher = new Searcher(source);
 
             searcher.GetLineCountAsync(String.Format("{0} {1}", SOME_STRING, random.Next(100))).ContinueWith(task =>

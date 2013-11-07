@@ -24,20 +24,17 @@ namespace LineSearchExec
             this.source = source;
         }
 
-        public Int32 GetLinesCount(String line, Boolean throwIfSourceNotReady = false)
+        public Int32 GetLinesCount(String line, Boolean checkReady = false)
         {
+            if (checkReady && source.State != Source.StorageState.Ready)
+            {
+                throw NewSourceNotReadyException();
+            }
             return source.GetLinesCountInSource(line);
 
         }
 
-        public Boolean TryGetLinesCount(String line, out Int32 result, Boolean throwIfSourceNotReady = false)
-        {
-            var success = source.IsReady;
-            result = success ? source.GetLinesCountInSource(line) : 0;
-            return success;
-        }
-
-        public Task<Int32> GetLinesCountAsync(String line, Boolean throwIfSourceNotReady = false)
+        public Task<Int32> GetLinesCountAsync(String line, Boolean checkReady = false)
         {
             Task<Int32> task;
             if (source.State == Source.StorageState.Ready)
@@ -48,7 +45,7 @@ namespace LineSearchExec
             }
             else
             {
-                if (throwIfSourceNotReady)
+                if (checkReady)
                 {
                     throw NewSourceNotReadyException();
                 }
@@ -64,7 +61,7 @@ namespace LineSearchExec
 
         private int FindLineCountInSource(object o)
         {
-            return source.GetValue((string)o);
+            return source.GetLinesCountInSource((string)o);
         }
     }
 }
