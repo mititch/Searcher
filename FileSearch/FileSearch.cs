@@ -23,7 +23,7 @@ namespace FileSearch
 
         private const Int32 ELEMENT_COUNT = 5;
 
-        private const string FILE_NAME = "C:/Users/mititch/Downloads/bf/f2.txt";
+        private const string FILE_NAME = "E:/bf/f1.txt";//"C:/Users/mititch/Downloads/bf/f2.txt";
 
         private const string SOME_STRING = 
             "have very many outstanding loans but I do need to consolidate and move ";
@@ -216,7 +216,7 @@ namespace FileSearch
                 using (StreamWriter streamWriter = new StreamWriter(stream))
                 {
                    
-                    for (Int32 i = 0; i < 10000000; i++)
+                    for (Int32 i = 0; i < 100000; i++)
                     {
                         streamWriter.WriteLine(String.Format("{0} {1}",
                             SOME_STRING, this.random.Next(100)));

@@ -4,7 +4,7 @@
 // </copyright>
 //
 // <summary>
-//    Search for random lines count in file
+//    Represent the source for search
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -12,7 +12,6 @@
 namespace LineSearchExec
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Threading;
 
@@ -28,12 +27,13 @@ namespace LineSearchExec
         // Used for locks in core mode
         private AutoResetEvent c_lock = new AutoResetEvent(false);
 
-        // Storage of data
-        private IDictionary<string, int> storage;
+        // Inner storage 
+        private Storage storage;
 
         // Track whether Dispose has been called.
         private Boolean disposed = false;
 
+        // Storage state
         private StorageState state = StorageState.NotReady;
 
         // Name of file
@@ -103,12 +103,12 @@ namespace LineSearchExec
                 }
                 catch (Exception exception)
                 {
+                    // Set instance state to broken
+                    this.state = StorageState.Broken;
                     throw NewParsingFileException(exception);
                 }
                 finally
                 {
-                    // Set instance state to broken
-                    this.state = StorageState.Broken;
                     // Release lock
                     c_lock.Set();
                 }
@@ -117,7 +117,7 @@ namespace LineSearchExec
             {
                 // Lock other threads
                 c_lock.WaitOne();
-                // Throw exception if storage state become broken while lock
+                // Throw exception if storage state was broken during lock
                 if (this.state == StorageState.Broken)
                 {
                     throw NewParsingFileException(null);
@@ -141,7 +141,7 @@ namespace LineSearchExec
             }
 
             // Return result of line count search
-            return storage.ContainsKey(line) ? this.storage[line] : 0;
+            return storage.GetValue(line);
         }
 
         ///<summary>
@@ -171,8 +171,9 @@ namespace LineSearchExec
         /// <param name="filename">Name of file</param>
         private void Fill(String filename)
         {
-            //Creates new dictionary
-            IDictionary<string, int> cache = new Dictionary<string, int>();
+            //Creates new storage
+            Storage cache = new Storage(x => x.ToUpper().GetHashCode(),
+                x => x.ToUpper().GetHashCode());
             
             using (StreamReader reader = new StreamReader(filename))
             {
@@ -180,16 +181,7 @@ namespace LineSearchExec
                 {
                     String line = reader.ReadLine();
 
-                    if (cache.ContainsKey(line))
-                    {
-                        // if cache already contains key increase it value
-                        cache[line] = cache[line] + 1;
-                    }
-                    else
-                    {
-                        // Add new element to dictionary
-                        cache.Add(line, 1);
-                    }
+                    cache.AddItem(line);
                 }
 
             }

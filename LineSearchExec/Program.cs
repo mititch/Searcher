@@ -20,7 +20,7 @@ namespace LineSearchExec
         /// <summary>
         /// Name of file
         /// </summary>
-        private const string FILE_NAME = "C:/Users/mititch/Downloads/bf/f2.txt";
+        private const string FILE_NAME = "E:/bf/f2.txt";//C:/Users/mititch/Downloads/bf/f3.txt";
 
         /// <summary>
         /// Common part of any line
@@ -38,11 +38,11 @@ namespace LineSearchExec
 
             Source source = new Source(FILE_NAME);
 
-            source.PrepereSource();
+            source.PrepareSource();
 
             Searcher searcher = new Searcher(source);
 
-            searcher.GetLineCountAsync(String.Format("{0} {1}", SOME_STRING, random.Next(100))).ContinueWith(task =>
+            searcher.GetLinesCountAsync(String.Format("{0} {1}", SOME_STRING, random.Next(100))).ContinueWith(task =>
             {
                 Console.WriteLine("Process..");
                 Stopwatch sw = new Stopwatch();
@@ -54,7 +54,7 @@ namespace LineSearchExec
                 {
                     for (int i = 0; i < 100; i++)
                     {
-                        tasks[j * 100 + i] = searcher.GetLineCountAsync(String.Format("{0} {1}", SOME_STRING, i));
+                        tasks[j * 100 + i] = searcher.GetLinesCountAsync(String.Format("{0} {1}", SOME_STRING, i));
                     }
                 }
                 Task.WaitAll(tasks);

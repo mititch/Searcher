@@ -1,30 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-
+﻿//
+// <copyright company="Softerra">
+//    Copyright (c) Softerra, Ltd. All rights reserved.
+// </copyright>
+//
+// <summary>
+//    Storage for items chains
+// </summary>
+//
+// <author email="mititch@softerra.com">Alex Mitin</author>
+//
 namespace LineSearchExec
 {
+    using System;
+    using System.Collections.Generic;
+
     class Storage
     {
-        private Func<String, int> firstHashProvider;
+        // Function to calculate hash code for table 
+        private readonly Func<String, int> tableKeyHashProvider;
 
-        private Func<String, int> secondHashProvider;
+        // Function to calculate hash code for items chain
+        private readonly Func<String, int> itemKeyHashProvider;
 
-        private IDictionary<Int32, Item> data = new Dictionary<int, Item>();
+        // Inner collection
+        private readonly IDictionary<Int32, Item> data = new Dictionary<int, Item>();
 
-        public Storage(Func<String, int> firstHashProvider, Func<String, int> secondHashProvider)
+        /// <summary>
+        /// Creates an instance of Storage class
+        /// </summary>
+        /// <param name="tableKeyHashProvider"></param>
+        /// <param name="itemKeyHashProvider"></param>
+        public Storage(Func<String, int> tableKeyHashProvider, Func<String, int> itemKeyHashProvider)
         {
-            this.firstHashProvider = firstHashProvider;
-            
-            this.secondHashProvider = secondHashProvider;
+            this.tableKeyHashProvider = tableKeyHashProvider;
+
+            this.itemKeyHashProvider = itemKeyHashProvider;
         }
         
+        /// <summary>
+        /// Add or update item to chain in table cell
+        /// </summary>
+        /// <param name="line">String value for calculating hashes</param>
         public void AddItem(string line)
         {
-            Int32 hash1 = firstHashProvider(line);
-            Int32 hash2 = secondHashProvider(line);
+            Int32 hash1 = tableKeyHashProvider(line);
+            Int32 hash2 = itemKeyHashProvider(line);
             if (data.ContainsKey(hash1))
             {
                 Item item = data[hash1];
@@ -37,13 +57,18 @@ namespace LineSearchExec
             }
         }
 
+        /// <summary>
+        /// Get value of item from storage
+        /// </summary>
+        /// <param name="line">String value for calculating hashes</param>
+        /// <returns>Integer value</returns>
         public Int32 GetValue(string line)
         {
-            Int32 hash1 = firstHashProvider(line);
+            Int32 hash1 = tableKeyHashProvider(line);
 
             if (data.ContainsKey(hash1))
             {
-                Int32 hash2 = secondHashProvider(line);
+                Int32 hash2 = itemKeyHashProvider(line);
                 return data[hash1].GetValue(hash2);
             }
             else
