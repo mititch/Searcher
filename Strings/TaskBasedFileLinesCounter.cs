@@ -15,8 +15,9 @@ namespace Strings
     using System.Collections.Generic;
     using System.IO;
     using System.Threading;
+    using System.Threading.Tasks;
 
-    class TaskBasedFileLinesCounter : ILinesCounter
+    class TaskBasedFileLinesCounter
     {
 
         #region fields
@@ -128,8 +129,9 @@ namespace Strings
         /// <summary>
         /// <see cref="ILinesCounter.GetLinesCountAsync"/>
         /// </summary>
-        public void GetLinesCountAsync(String line, Action<Int32> callback)
+        public Task<Int32> GetLinesCountAsync(String line)
         {
+            
             if (this.state == LinesCounterState.Ready)
             {
                 callback(this.CheckLine(line));
@@ -140,6 +142,8 @@ namespace Strings
                     new AsyncCallBackState(line, callback));
             }
         }
+
+
 
         /// <summary>
         /// <see cref="ILinesCounter.TryGetLinesCount"/>
