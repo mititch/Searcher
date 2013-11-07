@@ -32,7 +32,7 @@ namespace LineSearchExec
         /// Starts execution
         /// </summary>
         /// <param name="args"></param>
-        static void Main(string[] args)
+        static void Main(String[] args)
         {
             Random random = new Random();
 
@@ -48,18 +48,18 @@ namespace LineSearchExec
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
 
-                Task<int>[] tasks = new Task<int>[1000];
+                Task<Int32>[] tasks = new Task<Int32>[1000];
 
-                for (int j = 0; j < 10; j++)
+                for (Int32 j = 0; j < 10; j++)
                 {
-                    for (int i = 0; i < 100; i++)
+                    for (Int32 i = 0; i < 100; i++)
                     {
                         tasks[j * 100 + i] = searcher.GetLinesCountAsync(String.Format("{0} {1}", SOME_STRING, i));
                     }
                 }
                 Task.WaitAll(tasks);
                 sw.Stop();
-                foreach (var task1 in tasks)
+                foreach (Task<Int32> task1 in tasks)
                 {
                     Console.WriteLine(task1.Result);
                 }

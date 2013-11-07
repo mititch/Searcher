@@ -12,7 +12,6 @@
 namespace LineSearchExec
 {
     using System;
-    using System.CodeDom;
     using System.Threading.Tasks;
 
     public class Searcher
@@ -38,11 +37,11 @@ namespace LineSearchExec
         /// <exception cref="MemberAccessException">Thrown if source not ready</exception>
         public Int32 GetLinesCount(String line, Boolean checkReady = false)
         {
-            if (checkReady && source.State != Source.StorageState.Ready)
+            if (checkReady && this.source.State != Source.StorageState.Ready)
             {
                 throw NewSourceNotReadyException();
             }
-            return source.GetLinesCountInSource(line);
+            return this.source.GetLinesCountInSource(line);
 
         }
         
@@ -56,11 +55,13 @@ namespace LineSearchExec
         public Task<Int32> GetLinesCountAsync(String line, Boolean checkReady = false)
         {
             Task<Int32> task;
-            if (source.State == Source.StorageState.Ready)
+            if (this.source.State == Source.StorageState.Ready)
             {
                 // Create task in ready state with result
                 TaskCompletionSource<Int32> taskSource = new TaskCompletionSource<Int32>();
+                
                 taskSource.SetResult(this.FindLineCountInSource(line));
+                
                 task = taskSource.Task;
             }
             else
@@ -84,9 +85,9 @@ namespace LineSearchExec
             return new MemberAccessException("Storage is not ready.");
         }
 
-        private int FindLineCountInSource(object o)
+        private int FindLineCountInSource(Object o)
         {
-            return source.GetLinesCountInSource((string)o);
+            return source.GetLinesCountInSource((String)o);
         }
     }
 }

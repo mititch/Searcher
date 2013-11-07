@@ -17,20 +17,20 @@ namespace LineSearchExec
     class Storage
     {
         // Function to calculate hash code for table 
-        private readonly Func<String, int> tableKeyHashProvider;
+        private readonly Func<String, Int32> tableKeyHashProvider;
 
         // Function to calculate hash code for items chain
-        private readonly Func<String, int> itemKeyHashProvider;
+        private readonly Func<String, Int32> itemKeyHashProvider;
 
         // Inner collection
-        private readonly IDictionary<Int32, Item> data = new Dictionary<int, Item>();
+        private readonly IDictionary<Int32, Item> data = new Dictionary<Int32, Item>();
 
         /// <summary>
         /// Creates an instance of Storage class
         /// </summary>
         /// <param name="tableKeyHashProvider"></param>
         /// <param name="itemKeyHashProvider"></param>
-        public Storage(Func<String, int> tableKeyHashProvider, Func<String, int> itemKeyHashProvider)
+        public Storage(Func<String, Int32> tableKeyHashProvider, Func<String, Int32> itemKeyHashProvider)
         {
             this.tableKeyHashProvider = tableKeyHashProvider;
 
@@ -41,19 +41,19 @@ namespace LineSearchExec
         /// Add or update item to chain in table cell
         /// </summary>
         /// <param name="line">String value for calculating hashes</param>
-        public void AddItem(string line)
+        public void AddItem(String line)
         {
-            Int32 hash1 = tableKeyHashProvider(line);
-            Int32 hash2 = itemKeyHashProvider(line);
-            if (data.ContainsKey(hash1))
+            Int32 hash1 = this.tableKeyHashProvider(line);
+            Int32 hash2 = this.itemKeyHashProvider(line);
+            if (this.data.ContainsKey(hash1))
             {
-                Item item = data[hash1];
+                Item item = this.data[hash1];
 
                 item.AddValue(hash2);
             }
             else
             {
-                data.Add(hash1, new Item(hash2, null));
+                this.data.Add(hash1, new Item(hash2, null));
             }
         }
 
@@ -62,14 +62,14 @@ namespace LineSearchExec
         /// </summary>
         /// <param name="line">String value for calculating hashes</param>
         /// <returns>Integer value</returns>
-        public Int32 GetValue(string line)
+        public Int32 GetValue(String line)
         {
-            Int32 hash1 = tableKeyHashProvider(line);
+            Int32 hash1 = this.tableKeyHashProvider(line);
 
-            if (data.ContainsKey(hash1))
+            if (this.data.ContainsKey(hash1))
             {
-                Int32 hash2 = itemKeyHashProvider(line);
-                return data[hash1].GetValue(hash2);
+                Int32 hash2 = this.itemKeyHashProvider(line);
+                return this.data[hash1].GetValue(hash2);
             }
             else
             {

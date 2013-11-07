@@ -62,7 +62,7 @@ namespace LineSearchExec
         public void Dispose()
         {
             // Call internal Dispose(bool)
-            Dispose(true);
+            this.Dispose(true);
             // Prevent the destructor from being called
             GC.SuppressFinalize(this);
         }
@@ -91,13 +91,13 @@ namespace LineSearchExec
         public Boolean PrepareSource()
         {
             // Only one thread can enter
-            if (Interlocked.Exchange(ref u_lock, 1) == 0)
+            if (Interlocked.Exchange(ref this.u_lock, 1) == 0)
             {
                 // Fill source
                 try
                 {
                     // Fill storage with file data
-                    this.Fill(filename);
+                    this.Fill(this.filename);
                     // Set instance state to ready
                     this.state = StorageState.Ready;
                 }
@@ -110,7 +110,7 @@ namespace LineSearchExec
                 finally
                 {
                     // Release lock
-                    c_lock.Set();
+                    this.c_lock.Set();
                 }
             }
             else
@@ -210,7 +210,9 @@ namespace LineSearchExec
         public enum StorageState
         {
             Ready,
+            
             NotReady,
+            
             Broken
         }
 
