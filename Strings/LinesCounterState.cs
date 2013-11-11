@@ -20,6 +20,9 @@ namespace Strings
         Pending,
 
         // ILinesCounter implementation is ready for check lines
-        Ready
+        Ready,
+
+        // ILinesCounter implementation is brocken and can not be use
+        Broken
     }
 }

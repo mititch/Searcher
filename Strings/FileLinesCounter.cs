@@ -125,7 +125,7 @@ namespace Strings
                 this.LoadData(null);
             }
 
-            return this.disposed ? -1 : this.CheckLine(line);
+            return this.state == LinesCounterState.Broken ? -1 : this.CheckLine(line);
 
         }
 
@@ -152,20 +152,23 @@ namespace Strings
         /// </summary>
         public LinesCounterState TryGetLinesCount(String line, out Int32 result)
         {
+            LinesCounterState thisState;
             
             // If it is first call - requesting data loading 
             if (this.state == LinesCounterState.Created)
             {
-                this.state = LinesCounterState.Pending;
                 ThreadPool.QueueUserWorkItem(this.LoadData);
-            }
 
-            LinesCounterState thisState = this.state;
+                thisState = LinesCounterState.Pending;
+            }
+            else
+            {
+                thisState = this.state;
+            }
 
             result = thisState == LinesCounterState.Ready ? this.CheckLine(line) : -1;
 
             return thisState;
-
         }
 
 #endregion
@@ -196,6 +199,7 @@ namespace Strings
             }
 
             this.disposed = true;
+            this.state = LinesCounterState.Broken;
         }
 
         /// <summary>
@@ -238,19 +242,30 @@ namespace Strings
             // Only one thread can read the data
             lock (locker)
             {
-                if (this.State != LinesCounterState.Ready)
+                if (this.state == LinesCounterState.Created )
                 {
-                    this.reader = new LinesReader(this.hashCodeProvider);
+                    this.state = LinesCounterState.Pending;
+                    
+                    try
+                    {
+                        this.reader = new LinesReader(this.hashCodeProvider);
 
-                    Stream stream = new FileStream(this.fileName, FileMode.Open);
+                        Stream stream = new FileStream(this.fileName, FileMode.Open);
 
-                    this.data = this.reader.Read(stream);
-
-                    this.reader = null;
+                        this.data = this.reader.Read(stream);
+                    }
+                    finally
+                    {
+                        this.state = this.data == null || this.disposed 
+                            ? LinesCounterState.Broken 
+                            : LinesCounterState.Ready;
+                        
+                        this.reader = null;
+                    }
                 }
             }
 
-            this.state = LinesCounterState.Ready;
+            //this.state = LinesCounterState.Ready;
         }
 
         /// <summary>
