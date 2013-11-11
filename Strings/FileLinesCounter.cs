@@ -10,6 +10,9 @@
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
 //
+
+using System.ComponentModel;
+
 namespace Strings
 {
     using System;
@@ -17,7 +20,7 @@ namespace Strings
     using System.IO;
     using System.Threading;
 
-    class FileLinesCounter : ILinesCounter
+    public class FileLinesCounter : ILinesCounter
     {
 
 #region fields
@@ -113,15 +116,15 @@ namespace Strings
         /// <see cref="ILinesCounter.GetLinesCount"/>
         /// </summary>
         /// <exception cref="FieldAccessException">Thrown if data can not be read</exception>
+        /// <returns>Returns -1 if the work is canceled or object is disposed from another thread</returns>
         public int GetLinesCount(String line)
         {
             if (this.state != LinesCounterState.Ready)
             {
-                this.state = LinesCounterState.Pending;
+                // Reqest data loading
                 this.LoadData(null);
             }
 
-            //NOTE: return what?
             return this.disposed ? -1 : this.CheckLine(line);
 
         }
@@ -133,10 +136,12 @@ namespace Strings
         {
             if (this.state == LinesCounterState.Ready)
             {
+                // Execute callback function immediately
                 callback(this.CheckLine(line));
             }
             else
             {
+                // Requesting work item to execute the functions 
                 ThreadPool.QueueUserWorkItem(this.GetLinesCountAsyncCallBack,
                     new AsyncCallBackState(line, callback));
             }
@@ -147,15 +152,19 @@ namespace Strings
         /// </summary>
         public LinesCounterState TryGetLinesCount(String line, out Int32 result)
         {
+            
+            // If it is first call - requesting data loading 
             if (this.state == LinesCounterState.Created)
             {
                 this.state = LinesCounterState.Pending;
                 ThreadPool.QueueUserWorkItem(this.LoadData);
             }
 
-            result = this.state == LinesCounterState.Ready ? this.CheckLine(line) : -1;
+            LinesCounterState thisState = this.state;
 
-            return this.state;
+            result = thisState == LinesCounterState.Ready ? this.CheckLine(line) : -1;
+
+            return thisState;
 
         }
 
@@ -199,6 +208,7 @@ namespace Strings
 
             if (!this.disposed)
             {
+                // Execute callback function
                 callbackState.Action(this.GetLinesCount(callbackState.Line));
             }
         }
@@ -225,6 +235,7 @@ namespace Strings
         /// </summary>
         private void LoadData(Object obj)
         {
+            // Only one thread can read the data
             lock (locker)
             {
                 if (this.State != LinesCounterState.Ready)
@@ -236,8 +247,6 @@ namespace Strings
                     this.data = this.reader.Read(stream);
 
                     this.reader = null;
-
-                    //this.state = LinesCounterState.Ready;
                 }
             }
 
