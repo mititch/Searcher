@@ -102,8 +102,10 @@
                 this.readerThread = new Thread(LoadData);
 
                 this.readerThread.IsBackground = true;
+
+                this.readerThread.Start();
             }
-            this.readerThread.Start();
+
 
         }
 

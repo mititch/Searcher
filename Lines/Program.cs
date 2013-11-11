@@ -73,13 +73,14 @@ namespace Lines
                 AsyncRequest(checker);
                 if (i == 3) 
                 {
-                    for (int j = 0; j < 2; j++)
+                    for (int j = 0; j < 1; j++)
                     {
                         ResetAsync(checker);    
                     }
 
                 }
             }
+            Console.ReadLine();
             Console.WriteLine("All async runed");
             Console.WriteLine("Run sync");
             for (int i = 0; i < 5; i++)
