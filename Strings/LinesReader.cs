@@ -36,7 +36,6 @@ namespace Strings
         // constructors
         //
 
-
         /// <summary>
         /// Creates an instance of LinesReader class
         /// </summary>
@@ -60,7 +59,6 @@ namespace Strings
         {
             this.canceled = true;
         }
-
         
         /// <summary>
         /// Reads lines from string and prepares the dictionary

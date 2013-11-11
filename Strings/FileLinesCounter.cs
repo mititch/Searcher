@@ -10,7 +10,6 @@
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
 //
-
 using System.ComponentModel;
 
 namespace Strings
@@ -121,7 +120,7 @@ namespace Strings
         {
             if (this.state != LinesCounterState.Ready)
             {
-                // Reqest data loading
+                // Request data loading
                 this.LoadData(null);
             }
 
@@ -250,12 +249,15 @@ namespace Strings
                     {
                         this.reader = new LinesReader(this.hashCodeProvider);
 
+                        // Open stream
                         Stream stream = new FileStream(this.fileName, FileMode.Open);
 
+                        // Request data from LinesReader
                         this.data = this.reader.Read(stream);
                     }
                     finally
                     {
+                        //If no data or instance is disposed set object state to Broken
                         this.state = this.data == null || this.disposed 
                             ? LinesCounterState.Broken 
                             : LinesCounterState.Ready;
