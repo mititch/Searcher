@@ -8,12 +8,12 @@
     using System.IO;
     using System.Collections;
 
-    public class FileLinesChecker : ILinesChecker
+    public class FileLinesCheckProcessor : ILinesChecker
     {
 
         private IDictionary data;
 
-        private readonly Object locker = new Object();
+        private readonly Object dataLocker = new Object();
 
         private String fileName;
 
@@ -21,23 +21,90 @@
 
         private FileLinesCheckerState state = FileLinesCheckerState.Canceled;
 
-        public FileLinesChecker(String fileName)
+        private Thread worker;
+        
+        private object queueLocker = new object();
+        
+        Queue<AsyncRequest> tasks = new Queue<AsyncRequest>();
+        
+        EventWaitHandle wh = new AutoResetEvent(false);
+
+        public FileLinesCheckProcessor(String fileName)
         {
+            worker = new Thread(Process);
+            worker.IsBackground = true;
+            worker.Start();
+
             this.fileName = fileName;
 
-            // Prepare the data
             Reset();
+        }
+
+        private void Process()
+        {
+            while (true)
+            {
+                AsyncRequest task = null;
+
+                lock (queueLocker)
+                {
+                    if (tasks.Count > 0)
+                    {
+                        task = tasks.Dequeue();
+                        if (task == null)
+                            return;
+                    }
+                }
+
+                if (task != null)
+                {
+                    lock (dataLocker)
+                    {
+                        // If instance waits for new data
+                        if (this.state == FileLinesCheckerState.Pending)
+                        {
+                            //Wait new data
+                            Monitor.Wait(dataLocker);
+                        }
+
+                        // If instance can return the answer
+                        if (this.state == FileLinesCheckerState.Ready)
+                        {
+                            // Execite success callback 
+                            Boolean result = this.data.Contains(task.Line);
+                            ThreadPool.QueueUserWorkItem((o) => task.SuccessCallback(result));
+                        }
+                        else
+                        {
+                            // Execite failure callback 
+                            String callbackParameter = this.state.ToString();
+                            ThreadPool.QueueUserWorkItem((o) => task.FailureCallback(callbackParameter));
+                        }
+                    }
+                }
+                else
+                    wh.WaitOne(); 
+            }
+
+        }
+
+        private void EnqueueTask(AsyncRequest task)
+        {
+            lock (queueLocker)
+                tasks.Enqueue(task);
+
+            wh.Set();
         }
 
         public void Cancel()
         {
-            lock (locker)
+            lock (dataLocker)
             {
                 // If stete is pending
                 if (this.state == FileLinesCheckerState.Pending)
                 {
                     // Cancel the previous reader execution
-                    linesReader.Cancel(); 
+                    linesReader.Cancel();
                 }
 
                 // Change the state
@@ -47,7 +114,7 @@
                 this.linesReader = null;
 
                 // Notify waiting threads about state changing
-                Monitor.PulseAll(locker);
+                Monitor.PulseAll(dataLocker);
             }
 
         }
@@ -56,13 +123,13 @@
         {
             Boolean result;
 
-            lock (locker)
+            lock (dataLocker)
             {
                 // If instance waits for new data
                 if (this.state == FileLinesCheckerState.Pending)
                 {
                     // Wait new data
-                    Monitor.Wait(locker);
+                    Monitor.Wait(dataLocker);
                 }
 
                 // Final check
@@ -81,8 +148,8 @@
 
         public void ContainsAsync(String line, Action<Boolean> onSuccess, Action<String> onFailure)
         {
-            // Creates new thread to the request processing 
-            ThreadPool.QueueUserWorkItem(ProcessRequest, new AsyncRequest(line, onSuccess, onFailure));
+            // Add task to the execution queue
+            EnqueueTask(new AsyncRequest(line, onSuccess, onFailure));
         }
 
         public void Reset()
@@ -93,11 +160,10 @@
 
         private void LoadData(Object notUsed)
         {
-            
+
             LinesReader threadReader = new LinesReader();
 
-            // Reset instance reader and update instance state
-            lock (locker)
+            lock (dataLocker)
             {
                 if (this.state == FileLinesCheckerState.Pending)
                 {
@@ -115,7 +181,6 @@
             }
 
             IDictionary newData = null;
-
             try
             {
                 using (Stream stream = new FileStream(this.fileName, FileMode.Open, FileAccess.Read))
@@ -130,7 +195,7 @@
                 // An unhandled exception causes to the program
             }
 
-            lock (locker)
+            lock (dataLocker)
             {
                 // If the load process was not canceled or changed with another one
                 if (!threadReader.IsCanceled)
@@ -142,12 +207,12 @@
                         this.data = newData;
                         this.state = this.data == null ? FileLinesCheckerState.Error : FileLinesCheckerState.Ready;
                     }
-                    
+
                     // Reader not needed more
                     this.linesReader = null;
 
                     // Notify other threads about data is available
-                    Monitor.PulseAll(locker);
+                    Monitor.PulseAll(dataLocker);
                 }
             }
 
@@ -157,13 +222,13 @@
         {
             AsyncRequest request = @object as AsyncRequest;
 
-            lock (locker)
+            lock (dataLocker)
             {
                 // If instance waits for new data
                 if (this.state == FileLinesCheckerState.Pending)
                 {
                     //Wait new data
-                    Monitor.Wait(locker);
+                    Monitor.Wait(dataLocker);
                 }
 
                 // If instance can return the answer
@@ -198,7 +263,7 @@
         /// </summary>
         private class AsyncRequest
         {
-            
+
             // Stores the success callback
             private Action<Boolean> successCallback;
 

@@ -30,26 +30,14 @@ namespace Lines
         // Is instance work canceled
         private Boolean canceled;
 
-
         #endregion
 
-        #region constructors
-        //
-        // constructors
-        //
-
-        /// <summary>
-        /// Creates an instance of LinesReader class
-        /// </summary>
-        public LinesReader()
-        {
-
-        }
-
-
+        #region Properties
         //
         // Properties
         //
+
+        public Boolean IsCanceled { get { return this.canceled; } }
 
         #endregion
 
@@ -67,7 +55,7 @@ namespace Lines
         }
 
         /// <summary>
-        /// Reads lines from string and prepares the dictionary
+        /// Reads lines from stream and prepares the dictionary which contains existing linnes
         /// </summary>
         /// <param name="stream">Stream of data</param>
         /// <returns>Dictionary with hashes as keys and lines counts as values</returns>
@@ -83,7 +71,7 @@ namespace Lines
                 }
             }
 
-            return result; // or null
+            return !this.canceled ? result : null; 
         }
 
         /// <summary>

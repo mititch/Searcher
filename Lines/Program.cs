@@ -11,7 +11,7 @@ namespace Lines
         /// <summary>
         /// File name
         /// </summary>
-        private const String FILE_NAME = "E:/bf/f1.txt";//"C:/Users/mititch/Downloads/bf1.txt";
+        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf1.txt";
         private const String WRONG_FILE_NAME = "C:/Users/mititch/Downloads/bf11.txt";
 
         /// <summary>
@@ -28,13 +28,13 @@ namespace Lines
         }
 
 
-        static void AsyncRequest(FileLinesChecker checker)
+        static void AsyncRequest(ILinesChecker checker)
         {
             checker.ContainsAsync(GetSomeLine(), ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
         }
 
-        
-        static void Request(FileLinesChecker checker)
+
+        static void Request(ILinesChecker checker)
         {
             try
             {
@@ -52,28 +52,28 @@ namespace Lines
             Console.WriteLine("Async Ok - {0} - {1}", Thread.CurrentThread.ManagedThreadId, result);
         }
 
-        static void ShowFailureResultFromAsync(FileLinesChecker.FileLinesCheckerState result)
+        static void ShowFailureResultFromAsync(String result)
         {
             Console.WriteLine("Async Fail - {0} - {1}", Thread.CurrentThread.ManagedThreadId, result);
         }
 
-        static void ResetAsync(FileLinesChecker checker) 
+        static void ResetAsync(ILinesChecker checker) 
         {
-            ThreadPool.QueueUserWorkItem(delegate(Object o) { checker.Reset(); });
+            ThreadPool.QueueUserWorkItem(x => { checker.Reset(); });
         }
 
         static void Main(String[] args)
         {
             
-            FileLinesChecker checker = new FileLinesChecker(FILE_NAME);
+            ILinesChecker checker = new FileLinesCheckProcessor(FILE_NAME);
 
             Console.WriteLine("Run async");
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 8; i++)
             {
                 AsyncRequest(checker);
                 if (i == 3) 
                 {
-                    for (int j = 0; j < 5; j++)
+                    for (int j = 0; j < 14; j++)
                     {
                         ResetAsync(checker);    
                     }
@@ -85,20 +85,21 @@ namespace Lines
             for (int i = 0; i < 5; i++)
             {
                 Request(checker);
-                if (i == 3)
+                /*if (i == 3)
                 {
                     checker.Reset();
-                }
+                }*/
             }
             Console.WriteLine("All sync runed");
 
-            checker.Cancel();
+            Thread.Sleep(100);
+            checker.Reset();
 
             Request(checker);
 
             AsyncRequest(checker);
 
-            checker.Reset();
+            checker.Cancel();
 
             Request(checker);
 
