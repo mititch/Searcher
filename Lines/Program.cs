@@ -26,12 +26,12 @@ namespace Lines
             return String.Format("{0} {1}", SOME_STRING, random.Next(200));
         }
 
-        static void AsyncRequest(ILinesChecker checker)
+        static void AsyncRequest(FileLinesCheckerBase checker)
         {
             checker.ContainsAsync(GetSomeLine(), ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
         }
 
-        static void AsyncSyncRequest(ILinesChecker checker)
+        static void AsyncSyncRequest(FileLinesCheckerBase checker)
         {
 
             ThreadPool.QueueUserWorkItem(x => { SyncRequest(checker); });
@@ -39,7 +39,7 @@ namespace Lines
             checker.ContainsAsync(GetSomeLine(), ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
         }
 
-        static void SyncRequest(ILinesChecker checker)
+        static void SyncRequest(FileLinesCheckerBase checker)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace Lines
             Console.WriteLine("Async Fail - {0} - {1}", Thread.CurrentThread.ManagedThreadId, result);
         }
 
-        static void ResetAsync(ILinesChecker checker)
+        static void ResetAsync(FileLinesCheckerBase checker)
         {
             ThreadPool.QueueUserWorkItem(x => {
                 Console.WriteLine("  Reset requested!");    
@@ -70,7 +70,7 @@ namespace Lines
             });
         }
 
-        static void CancelAsync(ILinesChecker checker)
+        static void CancelAsync(FileLinesCheckerBase checker)
         {
             ThreadPool.QueueUserWorkItem(x => {
                 Console.WriteLine("  Cancel requested!");
@@ -81,14 +81,38 @@ namespace Lines
         static void Main(String[] args)
         {
 
-            RandomTest();
+            LoopTest();
 
             Console.ReadLine();
         }
 
+
+        static void LoopTest()
+        {
+            FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME);
+            SyncRequest(checker);
+            Thread.Sleep(4000);
+            //checker.Dispose();
+            checker = null;
+            Console.WriteLine("Collect");
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Thread.Sleep(1000);
+            Console.WriteLine("End");
+        }
+
         static void RandomTest()
         {
-            ILinesChecker checker = new FileLinesCheckProcessor(FILE_NAME);
+            FileLinesCheckerBase checker = new FileLinesCheckerWithQueue(FILE_NAME);
 
             for (int i = 0; i < 50; i++)
             {
@@ -120,7 +144,7 @@ namespace Lines
 
         static void Test()
         {
-            ILinesChecker checker = new FileLinesCheckProcessor(FILE_NAME);
+            FileLinesCheckerBase checker = new FileLinesCheckerWithQueue(FILE_NAME);
 
             Console.WriteLine("  5 Async Requested");
             for (int i = 0; i < 5; i++)

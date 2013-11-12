@@ -45,9 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileLinesCheckerBase.cs" />
-    <Compile Include="FileLinesCheckProcessor.cs" />
+    <Compile Include="FileLinesCheckerWithQueue.cs" />
     <Compile Include="FileLinesChecker.cs" />
-    <Compile Include="ILinesChecker.cs" />
     <Compile Include="LinesReader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

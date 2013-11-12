@@ -4,9 +4,8 @@
 // </copyright>
 //
 // <summary>
-//    Reads lines from steam and generate dictionary.
-//    Dictionary keys - line hash code
-//    Dictionary values - number of identical lines in file 
+//    Instance can read lines from stream
+//    and generate dictionary which contains existing lines
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -19,7 +18,7 @@ namespace Lines
     using System.Threading;
     using System.Collections;
 
-    class LinesReader
+    public class LinesReader
     {
 
         #region fields
@@ -27,7 +26,7 @@ namespace Lines
         // fields
         //
 
-        // Is instance work canceled
+        // Contains true if execution was canceled
         private Boolean canceled;
 
         #endregion
@@ -37,6 +36,9 @@ namespace Lines
         // Properties
         //
 
+        /// <summary>
+        /// Return true if execution was canceled
+        /// </summary>
         public Boolean IsCanceled 
         { 
             get { return this.canceled; } 
@@ -50,7 +52,7 @@ namespace Lines
         //
 
         /// <summary>
-        /// Cancel execution of the read process
+        /// Cancel execution of the read
         /// </summary>
         public void Cancel()
         {
@@ -58,10 +60,10 @@ namespace Lines
         }
 
         /// <summary>
-        /// Reads lines from stream and prepares the dictionary which contains existing linnes
+        /// Reads lines from stream and returns the dictionary which contains existing lines
         /// </summary>
         /// <param name="stream">Stream of data</param>
-        /// <returns>Dictionary with hashes as keys and lines counts as values</returns>
+        /// <returns>Dictionary containing the existing lines</returns>
         public IDictionary Read(Stream stream)
         {
             IDictionary result = new Hashtable();
