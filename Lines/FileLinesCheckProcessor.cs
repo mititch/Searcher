@@ -23,79 +23,59 @@
 
         private Thread worker;
         
-        private object queueLocker = new object();
-        
-        Queue<AsyncRequest> tasks = new Queue<AsyncRequest>();
-        
-        EventWaitHandle wh = new AutoResetEvent(false);
+        private object taskQueueLocker = new object();
 
+        Queue<AsyncRequest> tasksQueue = new Queue<AsyncRequest>();
+        
         public FileLinesCheckProcessor(String fileName)
         {
-            worker = new Thread(Process);
+            this.fileName = fileName;
+            
+            worker = new Thread(ProcessRequests);
+            
             worker.IsBackground = true;
+            
             worker.Start();
 
-            this.fileName = fileName;
-
-            Reset();
+            ThreadPool.QueueUserWorkItem(LoadData);
         }
 
-        private void Process()
+        private void ProcessRequests()
         {
             while (true)
             {
                 AsyncRequest task = null;
 
-                lock (queueLocker)
+                lock (taskQueueLocker)
                 {
-                    if (tasks.Count > 0)
+                    if (tasksQueue.Count == 0)
                     {
-                        task = tasks.Dequeue();
-                        if (task == null)
-                            return;
+                        Monitor.Wait(taskQueueLocker);
                     }
+
+                    task = tasksQueue.Dequeue();
                 }
 
                 if (task != null)
                 {
                     lock (dataLocker)
                     {
-                        // If instance waits for new data
-                        if (this.state == FileLinesCheckerState.Pending)
-                        {
-                            //Wait new data
-                            Monitor.Wait(dataLocker);
-                        }
-
-                        // If instance can return the answer
-                        if (this.state == FileLinesCheckerState.Ready)
-                        {
-                            // Execite success callback 
-                            Boolean result = this.data.Contains(task.Line);
-                            ThreadPool.QueueUserWorkItem((o) => task.SuccessCallback(result));
-                        }
-                        else
-                        {
-                            // Execite failure callback 
-                            String callbackParameter = this.state.ToString();
-                            ThreadPool.QueueUserWorkItem((o) => task.FailureCallback(callbackParameter));
-                        }
+                        ProcessAsyncRequest(task);
                     }
                 }
-                else
-                {
-                    wh.WaitOne();
-                }
+
             }
 
         }
 
         private void EnqueueTask(AsyncRequest task)
         {
-            lock (queueLocker)
-                tasks.Enqueue(task);
+            lock (taskQueueLocker)
+            {
+                tasksQueue.Enqueue(task);
+                Monitor.Pulse(taskQueueLocker);
+            }
 
-            wh.Set();
         }
 
         public void Cancel()
@@ -220,31 +200,28 @@
 
         }
 
-        private void ProcessRequest(Object @object)
+        private void ProcessAsyncRequest(AsyncRequest request)
         {
-            AsyncRequest request = @object as AsyncRequest;
 
-            lock (dataLocker)
+            // If instance waits for new data
+            if (this.state == FileLinesCheckerState.Pending)
             {
-                // If instance waits for new data
-                if (this.state == FileLinesCheckerState.Pending)
-                {
-                    //Wait new data
-                    Monitor.Wait(dataLocker);
-                }
+                //Wait new data
+                Monitor.Wait(dataLocker);
+            }
 
-                // If instance can return the answer
-                if (this.state == FileLinesCheckerState.Ready)
-                {
-                    // Execite success callback 
-                    request.SuccessCallback(this.data.Contains(request.Line));
-                }
-                else
-                {
-                    // Execite failure callback 
-                    request.FailureCallback(this.state.ToString());
-                }
-
+            // If instance can return the answer
+            if (this.state == FileLinesCheckerState.Ready)
+            {
+                // Execite success callback 
+                Boolean result = this.data.Contains(request.Line);
+                ThreadPool.QueueUserWorkItem((o) => request.SuccessCallback(result));
+            }
+            else
+            {
+                // Execite failure callback 
+                String callbackParameter = this.state.ToString();
+                ThreadPool.QueueUserWorkItem((o) => request.FailureCallback(callbackParameter));
             }
 
         }

@@ -37,7 +37,10 @@ namespace Lines
         // Properties
         //
 
-        public Boolean IsCanceled { get { return this.canceled; } }
+        public Boolean IsCanceled 
+        { 
+            get { return this.canceled; } 
+        }
 
         #endregion
 

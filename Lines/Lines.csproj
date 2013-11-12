@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileLinesCheckerBase.cs" />
     <Compile Include="FileLinesCheckProcessor.cs" />
     <Compile Include="FileLinesChecker.cs" />
     <Compile Include="ILinesChecker.cs" />
