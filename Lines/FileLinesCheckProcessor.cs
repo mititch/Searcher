@@ -83,7 +83,9 @@
                     }
                 }
                 else
-                    wh.WaitOne(); 
+                {
+                    wh.WaitOne();
+                }
             }
 
         }
@@ -192,7 +194,7 @@
             catch (Exception)
             {
                 // TODO: Log exception
-                // An unhandled exception causes to the program
+                // An unhandled exception causes to the program crach
             }
 
             lock (dataLocker)
