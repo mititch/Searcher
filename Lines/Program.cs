@@ -11,7 +11,7 @@ namespace Lines
         /// <summary>
         /// File name
         /// </summary>
-        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf1.txt";
+        private const String FILE_NAME = "E:/bf/f1.txt";//"C:/Users/mititch/Downloads/bf1.txt";
         private const String WRONG_FILE_NAME = "C:/Users/mititch/Downloads/bf11.txt";
 
         /// <summary>
@@ -73,14 +73,13 @@ namespace Lines
                 AsyncRequest(checker);
                 if (i == 3) 
                 {
-                    for (int j = 0; j < 1; j++)
+                    for (int j = 0; j < 5; j++)
                     {
                         ResetAsync(checker);    
                     }
 
                 }
             }
-            Console.ReadLine();
             Console.WriteLine("All async runed");
             Console.WriteLine("Run sync");
             for (int i = 0; i < 5; i++)
@@ -88,7 +87,7 @@ namespace Lines
                 Request(checker);
                 if (i == 3)
                 {
-                    checker.Reset(WRONG_FILE_NAME);
+                    checker.Reset();
                 }
             }
             Console.WriteLine("All sync runed");
@@ -99,7 +98,7 @@ namespace Lines
 
             AsyncRequest(checker);
 
-            checker.Reset(FILE_NAME);
+            checker.Reset();
 
             Request(checker);
 

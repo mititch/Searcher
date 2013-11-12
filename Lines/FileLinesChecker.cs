@@ -76,41 +76,47 @@
 
         }
 
-        public void Reset(String fileName = null)
+        public void Reset()
         {
             Interlocked.Increment(ref busy);
-
+            
             lock (dataLocker)
             {
-
-                if (!String.IsNullOrEmpty(fileName))
-                {
-                    this.fileName = fileName;
-                }
-
-                lock (dataLocker)
-                {
-                    this.state = FileLinesCheckerState.Pending;
-                }
-
-                if (readerThread != null && readerThread.IsAlive)
-                {
-                    this.readerThread.Abort();
-                    this.readerThread.Join();
-                }
-
-                this.readerThread = new Thread(LoadData);
-
-                this.readerThread.IsBackground = true;
-
-                this.readerThread.Start();
+                this.state = FileLinesCheckerState.Pending;
             }
+
+            ThreadPool.QueueUserWorkItem(LoadData);
+
+
+            /*if (readerThread != null && readerThread.IsAlive)
+            {
+                this.readerThread.Abort();
+                this.readerThread.Join();
+            }
+
+            this.readerThread = new Thread(LoadData);
+
+            this.readerThread.IsBackground = true;
+
+            this.readerThread.Start();*/
+
 
 
         }
 
         private void LoadData(Object notUsed)
         {
+
+            lock (dataLocker)
+            {
+                if (readerThread != null && readerThread.IsAlive)
+                {
+                    this.readerThread.Abort();
+                    this.readerThread.Join();
+                }
+
+                this.readerThread = Thread.CurrentThread;
+            }
 
             IDictionary newData = null;
             try
