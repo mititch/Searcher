@@ -81,7 +81,7 @@ namespace Lines
         static void Main(String[] args)
         {
 
-            LoopTest();
+            Test();
 
             Console.ReadLine();
         }
@@ -90,10 +90,11 @@ namespace Lines
         static void LoopTest()
         {
             FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME);
-            SyncRequest(checker);
+            //SyncRequest(checker);
+            checker = null;
             Thread.Sleep(4000);
             //checker.Dispose();
-            checker = null;
+            
             Console.WriteLine("Collect");
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -105,7 +106,6 @@ namespace Lines
             GC.WaitForPendingFinalizers();
             GC.Collect();
             GC.WaitForPendingFinalizers();
-
             Thread.Sleep(1000);
             Console.WriteLine("End");
         }
@@ -144,7 +144,7 @@ namespace Lines
 
         static void Test()
         {
-            FileLinesCheckerBase checker = new FileLinesCheckerWithQueue(FILE_NAME);
+            FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME);
 
             Console.WriteLine("  5 Async Requested");
             for (int i = 0; i < 5; i++)
@@ -186,7 +186,7 @@ namespace Lines
             {
                 SyncRequest(checker);
             }
-
+            checker.Dispose();
 
         }
 

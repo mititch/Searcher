@@ -26,9 +26,6 @@ namespace Lines
         // Track whether Dispose has been called.
         private Boolean disposed = false;
         
-        // Stores worker thread which process asynq requests
-        private Thread worker;
-
         // Helper object for threads locks which needed in taskQueue access
         private object taskQueueLocker = new object();
 
@@ -41,13 +38,9 @@ namespace Lines
         /// <param name="fileName">Name of file</param>
         public FileLinesCheckerWithQueue(String fileName) : base(fileName)
         {
-            // Create and run new worker therad
-            this.worker = new Thread(ProcessRequests);
-
-            this.worker.IsBackground = true;
-
-            this.worker.Start();
-
+            // Create and run new worker thread
+            ThreadPool.QueueUserWorkItem(ProcessRequests);
+            
         }
 
         ~FileLinesCheckerWithQueue()
@@ -103,15 +96,21 @@ namespace Lines
                 // public Dispose()
                 if (disposing)
                 {
-
-                    // Cancel exising and new requests execution 
+                    // Set all request as canceled, stop data loading
                     Cancel();
+
+                    // Notify worker thread for stop working
+                    lock (taskQueueLocker) 
+                    {
+                        Monitor.Pulse(taskQueueLocker);
+                    }
                 }
                 // Always release or cleanup (any) unmanaged resources
             }
 
             // This effect worker loop
             this.disposed = true;
+            //Monitor.Pulse(taskQueueLocker);
         }
 
 
@@ -166,18 +165,27 @@ namespace Lines
         /// <summary>
         /// Checks is queue contains request and process it
         /// </summary>
-        private void ProcessRequests()
+        private void ProcessRequests(Object notUsed)
         {
-            while (!this.disposed)
+            // Execute while object is not disposed
+            while (!this.disposed) 
             {
                 AsyncRequest task = null;
 
+                // Lock task queue
                 lock (taskQueueLocker)
                 {
                     // If no requests is queue wait for task
                     if (tasksQueue.Count == 0)
                     {
                         Monitor.Wait(taskQueueLocker);
+
+                        // If object was disposed release thread
+                        if (this.disposed)
+                        {
+                            return;
+                        }
+                    
                     }
 
                     // Get task from queue
@@ -188,7 +196,6 @@ namespace Lines
                 if (task != null)
                 {
                     ProcessAsyncRequest(task);
-                    
                 }
 
             }
