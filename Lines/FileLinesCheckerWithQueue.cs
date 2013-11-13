@@ -143,7 +143,7 @@ namespace Lines
         }
 
         /// <summary>
-        ///  Prepares a result and executes a request callcack in the new thread
+        ///  Prepares a result and executes a request callcack
         /// </summary>
         /// <param name="request">AsyncRequest object</param>
         private void ProcessAsyncRequest(AsyncRequest request)
