@@ -33,10 +33,10 @@ namespace Lines
         protected readonly Object dataLocker = new Object();
 
         // Name of file
-        protected String fileName;
+        private String fileName;
 
         // Contains link to the LinesReader object, which reads the file now
-        protected LinesReader linesReader;
+        private LinesReader linesReader;
 
         // Instance state
         protected FileLinesCheckerState state = FileLinesCheckerState.Canceled;
