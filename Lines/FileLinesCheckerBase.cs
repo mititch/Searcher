@@ -273,9 +273,6 @@ namespace Lines
             // Store the requested line
             private String line;
 
-            // Store the result
-            private Object result;
-
             /// <summary>
             /// Creates an instance
             /// </summary>
@@ -313,15 +310,6 @@ namespace Lines
             public String Line
             {
                 get { return this.line; }
-            }
-
-            /// <summary>
-            /// Provides access to the result
-            /// </summary>
-            public Object Result
-            {
-                get { return this.result; }
-                set { this.result = value; }
             }
 
         }

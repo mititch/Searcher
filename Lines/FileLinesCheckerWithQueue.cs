@@ -159,44 +159,15 @@ namespace Lines
                 // If instance can return the answer
                 if (this.state == FileLinesCheckerState.Ready)
                 {
-
-                    // Save check result 
-                    request.Result = this.data.Contains(request.Line);
-                    // Request success callback execution
-                    ThreadPool.QueueUserWorkItem(SuccessCallbackExecutor,
-                        request);
+                    // Async success callback execution
+                    request.SuccessCallback.BeginInvoke(this.data.Contains(request.Line), null, null);
                 }
                 else
                 {
-                    // Save error message
-                    request.Result = this.state.ToString();
-                    // Request failure callback execution
-                    ThreadPool.QueueUserWorkItem(FailureCallbackExecutor,
-                        request);
+                    // Async failure callback execution
+                    request.FailureCallback.BeginInvoke(this.state.ToString(), null, null);
                 }
             }
-        }
-
-        /// <summary>
-        /// Executes a success callback
-        /// </summary>
-        /// <param name="object">AsyncRequest object</param>
-        private void SuccessCallbackExecutor(Object @object) 
-        {
-            AsyncRequest request = @object as AsyncRequest;
-
-            request.SuccessCallback((Boolean)request.Result);
-        }
-
-        /// <summary>
-        /// Executes a failure callback
-        /// </summary>
-        /// <param name="object">AsyncRequest object</param>
-        private void FailureCallbackExecutor(Object @object)
-        {
-            AsyncRequest request = @object as AsyncRequest;
-
-            request.FailureCallback((String)request.Result);
         }
 
         /// <summary>
