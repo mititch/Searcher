@@ -4,7 +4,7 @@
 // </copyright>
 //
 // <summary>
-//    Abstract class with basic functionality ....
+//    Abstract class with basic functionality of checking lines in file
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -29,13 +29,13 @@ namespace Lines
         // Existing lines storage
         protected IDictionary data;
 
-        // Helper object for threads locks which needed in data access
+        // Helper object for the data access lock
         protected readonly Object dataLocker = new Object();
 
         // Name of file
         protected String fileName;
 
-        // Contains link to reader object which readed file data now
+        // Contains link to the LinesReader object, which reads the file now
         protected LinesReader linesReader;
 
         // Instance state
@@ -51,9 +51,10 @@ namespace Lines
         /// <summary>
         /// Base constructor 
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">Name of file</param>
         protected FileLinesCheckerBase(String fileName)
         {
+            // Save file name
             this.fileName = fileName;
             
             // Request storage data updating
@@ -62,16 +63,18 @@ namespace Lines
 
         #endregion
 
-        #region ILinesChecker implementation
+        #region methods
         //
-        // ILinesChecker implementation
+        // methods
         //
 
         /// <summary>
-        /// Cancel exising and new requests execution
+        /// After call of this methods all existing and new requests 
+        /// will be thrown or returned as canceled
         /// </summary>
         public void Cancel()
         {
+            // Lock the data access
             lock (this.dataLocker)
             {
                 // If stete is pending
@@ -96,9 +99,10 @@ namespace Lines
         /// <summary>
         /// Checks is line contains in the file
         /// </summary>
-        /// <param name="line"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException">Thrown if inctance can not porocess request</exception>
+        /// <param name="line">Line for check</param>
+        /// <returns>True if the line exist in file</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if inctance can not porocess request</exception>
         public Boolean Contains(String line)
         {
             Boolean result;
@@ -112,9 +116,11 @@ namespace Lines
                     Monitor.Wait(this.dataLocker);
                 }
 
-                // Final check
+                // Check the state
                 if (this.state != FileLinesCheckerState.Ready)
                 {
+                    // Request can be processed only in Ready state
+                    // Throw exception
                     throw NewInvalidOperationException(this.state);
                 }
 
@@ -145,21 +151,14 @@ namespace Lines
             ThreadPool.QueueUserWorkItem(LoadData);
         }
 
-        #endregion
-
-        #region methods
-        //
-        // methods
-        //
-
         /// <summary>
-        /// Instantiated new LinesReader object for the storage updating
+        /// Creates new LinesReader object for the storage updating
         /// Sent notification to the other threads if update was not canceled
         /// </summary>
         /// <param name="notUsed">Not used parameter</param>
         private void LoadData(Object notUsed)
         {
-            LinesReader threadReader = new LinesReader();
+            LinesReader currentReader = new LinesReader();
 
             // Stop previous LinesReader execution
             lock (this.dataLocker)
@@ -175,18 +174,19 @@ namespace Lines
                     this.state = FileLinesCheckerState.Pending;
                 }
 
-                // Save link to the current reader
-                this.linesReader = threadReader;
+                // Save link to the current reader for cancel
+                this.linesReader = currentReader;
             }
 
             // Get new data from LinesReader
             IDictionary newData = null;
             try
             {
-                using (Stream stream = new FileStream(this.fileName, FileMode.Open, FileAccess.Read))
+                using (Stream stream = new FileStream(this.fileName,
+                    FileMode.Open, FileAccess.Read))
                 {
                     // Load data
-                    newData = threadReader.Read(stream);
+                    newData = currentReader.Read(stream);
                 }
             }
             catch (Exception)
@@ -196,17 +196,19 @@ namespace Lines
             }
 
             // If process was not canseled - update the data
-            lock (dataLocker)
+            lock (this.dataLocker)
             {
                 // If the load process was not canceled or changed with another one
-                if (!threadReader.IsCanceled)
+                if (!currentReader.IsCanceled)
                 {
                     // If cancelation of the instance work was not requested
                     if (this.state != FileLinesCheckerState.Canceled)
                     {
                         // Renew the data and status
                         this.data = newData;
-                        this.state = this.data == null ? FileLinesCheckerState.Error : FileLinesCheckerState.Ready;
+                        this.state = this.data == null 
+                            ? FileLinesCheckerState.Error 
+                            : FileLinesCheckerState.Ready;
                     }
 
                     // Reader not needed more
@@ -224,10 +226,12 @@ namespace Lines
         /// </summary>
         /// <returns>New InvalidOperationException</returns>
         /// <param name="state">Instance state</param>
-        private InvalidOperationException NewInvalidOperationException(FileLinesCheckerState state)
+        private InvalidOperationException NewInvalidOperationException(
+            FileLinesCheckerState state)
         {
             return new InvalidOperationException(
-                    String.Format("Can not process request. Instanse state is {1}. ManagedThreadId={0}",
+                    String.Format("Can not process request. " + 
+                    "Instanse state is {1}. ManagedThreadId={0}",
                     Thread.CurrentThread.ManagedThreadId,
                     state));
         }
@@ -248,9 +252,9 @@ namespace Lines
             Pending,
             // Data storage is ready
             Ready,
-            // Some error with storage update
+            // Some error occurred with the storage update
             Error,
-            // All requests will be canceled
+            // In this state all requests will be canceled
             Canceled
         }
 
@@ -269,13 +273,18 @@ namespace Lines
             // Store the requested line
             private String line;
 
+            // Store the result
+            private Object result;
+
             /// <summary>
             /// Creates an instance
             /// </summary>
             /// <param name="line">Line for check</param>
             /// <param name="sucessCallback">Success callback delegate</param>
             /// <param name="failureCallback">Failure callback delegate</param>
-            public AsyncRequest(String line, Action<Boolean> sucessCallback, Action<String> failureCallback)
+            public AsyncRequest(String line,
+                                Action<Boolean> sucessCallback,
+                                Action<String> failureCallback)
             {
                 this.line = line;
                 this.successCallback = sucessCallback;
@@ -304,6 +313,15 @@ namespace Lines
             public String Line
             {
                 get { return this.line; }
+            }
+
+            /// <summary>
+            /// Provides access to the result
+            /// </summary>
+            public Object Result
+            {
+                get { return this.result; }
+                set { this.result = value; }
             }
 
         }

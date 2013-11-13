@@ -5,7 +5,7 @@
 //
 // <summary>
 //    Makes search for the line in file
-//    Executes any async request in the new thread
+//    Executes any async requests in the new thread
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -20,8 +20,15 @@ namespace Lines
     using System.IO;
     using System.Collections;
 
+    [Obsolete("Lines.FileLinesChecker has been deprecated." + 
+        " Please use the Lines.FileLinesCheckerWithQueue class")]
     public class FileLinesChecker : FileLinesCheckerBase
     {
+
+        #region constructors
+        //
+        // constructors
+        //
 
         /// <summary>
         /// Creates an instance
@@ -31,17 +38,34 @@ namespace Lines
         {
         }
 
+        #endregion
+
+        #region FileLinesCheckerBase overrides
+        //
+        // FileLinesCheckerBase overrides
+        //
+
         /// <summary>
         /// Start new thread for the async request execution
         /// </summary>
         /// <param name="line">Line for check</param>
         /// <param name="onSuccess">Executed after success check<</param>
         /// <param name="onFailure">Executed if check can not be processed</param>
-        public override void ContainsAsync(string line, Action<bool> onSuccess, Action<string> onFailure)
+        public override void ContainsAsync(String line, 
+                                           Action<Boolean> onSuccess, 
+                                           Action<String> onFailure)
         {
             // Creates new thread for the request processing 
-            ThreadPool.QueueUserWorkItem(ProcessRequest, new AsyncRequest(line, onSuccess, onFailure));
+            ThreadPool.QueueUserWorkItem(ProcessRequest,
+                new AsyncRequest(line, onSuccess, onFailure));
         }
+
+        #endregion
+
+        #region methods
+        //
+        // methods
+        //
 
         /// <summary>
         /// If instance can process request execute success callback
@@ -52,13 +76,13 @@ namespace Lines
         {
             AsyncRequest request = @object as AsyncRequest;
 
-            lock (dataLocker)
+            lock (this.dataLocker)
             {
                 // If instance waits for the new data
                 if (this.state == FileLinesCheckerState.Pending)
                 {
                     //Wait new data
-                    Monitor.Wait(dataLocker);
+                    Monitor.Wait(this.dataLocker);
                 }
 
                 // If instance can return the answer
@@ -76,6 +100,8 @@ namespace Lines
             }
 
         }
+
+        #endregion
 
     }
 

@@ -76,22 +76,21 @@ namespace Lines
                 }
             }
 
+            // Return dictionary if work was not canceled
             return !this.canceled ? result : null; 
         }
 
         /// <summary>
-        /// Checks a line and updates the dictionary
+        /// Updates the dictionary with line
         /// </summary>
-        /// <param name="line">Line for search</param>
-        /// <param name="dictionary">Data storage</param>
+        /// <param name="line">Line</param>
+        /// <param name="dictionary">Dictionary</param>
         private void ProcessLine(String line, IDictionary dictionary)
         {
-           
             if (!dictionary.Contains(line))
             {
                 dictionary.Add(line, null);
             }
-            
         }
 
         #endregion

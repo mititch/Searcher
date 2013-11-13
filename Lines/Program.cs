@@ -1,101 +1,184 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-
+﻿//
+// <copyright company="Softerra">
+//    Copyright (c) Softerra, Ltd. All rights reserved.
+// </copyright>
+//
+// <summary>
+//    Tests the FileLinesCheckerWithQueue instance
+// </summary>
+//
+// <author email="mititch@softerra.com">Alex Mitin</author>
+//
 namespace Lines
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+
     class Program
     {
-        /// <summary>
-        /// File name
-        /// </summary>
-        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf11.txt";
+        #region fields
+        //
+        // fields
+        //
 
-        /// <summary>
-        /// Common part of any line
-        /// </summary>
+        // File name
+        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf1.txt";
+
+        // Common part of any line in file
         private const String SOME_STRING =
             "have very many outstanding loans but I do need to consolidate and move ";
 
+        #endregion
+
+        #region helpers
+
+        // Random number generator
         private static Random random = new Random();
 
-        static String GetSomeLine()
+        /// <summary>
+        /// Prepares some line which can be (or not) in file
+        /// </summary>
+        /// <returns>Line</returns>
+        private static String GetSomeLine()
         {
             return String.Format("{0} {1}", SOME_STRING, random.Next(200));
         }
 
-        static void AsyncRequest(FileLinesCheckerBase checker)
+        /// <summary>
+        /// Makes async request to checker with random line from new thread
+        /// </summary>
+        /// <param name="checker">FileLinesCheckerBase</param>        
+        private static void AsyncAsyncRequest(FileLinesCheckerBase checker)
         {
-            checker.ContainsAsync(GetSomeLine(), ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
-        }
-
-        static void AsyncSyncRequest(FileLinesCheckerBase checker)
-        {
-
-            ThreadPool.QueueUserWorkItem(x => { SyncRequest(checker); });
-
-            checker.ContainsAsync(GetSomeLine(), ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
-        }
-
-        static void SyncRequest(FileLinesCheckerBase checker)
-        {
-            try
-            {
-                Console.WriteLine("Sync Ok - {0} - {1}", Thread.CurrentThread.ManagedThreadId, checker.Contains(GetSomeLine()));
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine("Sync Fail - {0} - {1}", Thread.CurrentThread.ManagedThreadId, exception.Message);
-            }
-
-        }
-
-        static void ShowSuccessResultFromAsync(Boolean result)
-        {
-            Console.WriteLine("Async Ok - {0} - {1}", Thread.CurrentThread.ManagedThreadId, result);
-        }
-
-        static void ShowFailureResultFromAsync(String result)
-        {
-            Console.WriteLine("Async Fail - {0} - {1}", Thread.CurrentThread.ManagedThreadId, result);
-        }
-
-        static void ResetAsync(FileLinesCheckerBase checker)
-        {
-            ThreadPool.QueueUserWorkItem(x => {
-                Console.WriteLine("  Reset requested!");    
-                checker.Reset();
-            });
-        }
-
-        static void CancelAsync(FileLinesCheckerBase checker)
-        {
-            ThreadPool.QueueUserWorkItem(x => {
-                Console.WriteLine("  Cancel requested!");
-                checker.Cancel(); 
-            });
-        }
-
-        static void Main(String[] args)
-        {
-
-            RandomTest();
-
-            Console.ReadLine();
+            ThreadPool.QueueUserWorkItem(AsyncRequest, checker);
         }
 
         /// <summary>
-        /// Makes 50 random calls to the FileLinesCheckerWithQueue methods
-        /// All calls requested from different threads
+        /// Makes async request to checker with random line
         /// </summary>
-        static void RandomTest()
+        /// <param name="checker">FileLinesCheckerBase</param>
+        private static void AsyncRequest(Object @object)
         {
-            using (FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME))
+            FileLinesCheckerBase checker = @object as FileLinesCheckerBase;    
+            checker.ContainsAsync(GetSomeLine(),
+                ShowSuccessResultFromAsync, ShowFailureResultFromAsync);
+        }
+
+        /// <summary>
+        /// Makes sync request to checker with random line from new thread
+        /// </summary>
+        /// <param name="checker">FileLinesCheckerBase</param>        
+        private static void AsyncSyncRequest(FileLinesCheckerBase checker)
+        {
+            ThreadPool.QueueUserWorkItem(SyncRequest, checker);
+        }
+
+        /// <summary>
+        /// Makes sync request to checker with random line
+        /// </summary>
+        /// <param name="checker">FileLinesCheckerBase</param>
+        private static void SyncRequest(Object @object)
+        {
+            FileLinesCheckerBase checker = @object as FileLinesCheckerBase;
+            
+            try
+            {
+                Console.WriteLine("  Sync done: Thread={0}, Result={1}",
+                    Thread.CurrentThread.ManagedThreadId,
+                    checker.Contains(GetSomeLine()));
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("  Sync fail: Thread={0}, Exception={1}",
+                    Thread.CurrentThread.ManagedThreadId,
+                    exception.Message);
+            }
+
+        }
+
+        /// <summary>
+        /// Represent success callback
+        /// </summary>
+        /// <param name="result">FileLinesCheckerBase</param>
+        private static void ShowSuccessResultFromAsync(Boolean result)
+        {
+            Console.WriteLine("  Async done: Thread={0}, Result={1}",
+                Thread.CurrentThread.ManagedThreadId,
+                result);
+        }
+
+        /// <summary>
+        /// Represent failure callback
+        /// </summary>
+        /// <param name="result">FileLinesCheckerBase</param>
+        private static void ShowFailureResultFromAsync(String result)
+        {
+            Console.WriteLine("  Async fail: Thread={0}, Reason={1}",
+                Thread.CurrentThread.ManagedThreadId,
+                result);
+        }
+
+        /// <summary>
+        /// Call to FileLinesCheckerBase.Reset from new thread
+        /// </summary>
+        /// <param name="checker"></param>
+        private static void ResetAsync(FileLinesCheckerBase checker)
+        {
+            ThreadPool.QueueUserWorkItem(ResetChecker, checker);
+        }
+
+        /// <summary>
+        /// Call to FileLinesCheckerBase.Reset
+        /// </summary>
+        /// <param name="object">FileLinesCheckerBase as object</param>
+        private static void ResetChecker(Object @object)
+        {
+            FileLinesCheckerBase checker = @object as FileLinesCheckerBase;
+            Console.WriteLine("Reset call!");
+            checker.Reset();
+        }
+
+        /// <summary>
+        /// Call to FileLinesCheckerBase.Cancel from new thread
+        /// </summary>
+        /// <param name="checker">FileLinesCheckerBase</param>
+        private static void CancelAsync(FileLinesCheckerBase checker)
+        {
+            ThreadPool.QueueUserWorkItem(CancelChecker, checker);
+        }
+
+        /// <summary>
+        /// Call to FileLinesCheckerBase.Cancel
+        /// </summary>
+        /// <param name="object">FileLinesCheckerBase as object</param>
+        private static void CancelChecker(Object @object)
+        {
+            FileLinesCheckerBase checker = @object as FileLinesCheckerBase;
+            Console.WriteLine("Cancel call!");
+            checker.Cancel();
+        }
+
+        #endregion
+
+        #region test methods
+
+        /// <summary>
+        /// Makes 50 random calls to the FileLinesCheckerWithQueue methods
+        /// All calls make from the different threads
+        /// Waits 1 sec
+        /// Dispose FileLinesCheckerWithQueue instance
+        /// </summary>
+        private static void RandomTest()
+        {
+            //TODO: ?
+            using (FileLinesCheckerWithQueue checker 
+                = new FileLinesCheckerWithQueue(FILE_NAME))
             {
 
-                for (int i = 0; i < 50; i++)
+                for (Int32 i = 0; i < 50; i++)
                 {
                     switch (random.Next(10))
                     {
@@ -111,69 +194,99 @@ namespace Lines
                             {
                                 if (i % 2 == 1)
                                 {
+                                    // Request from new thread
                                     AsyncSyncRequest(checker);
                                 }
                                 else
                                 {
-                                    AsyncRequest(checker);
+                                    // Async request from new thread
+                                    AsyncAsyncRequest(checker);
                                 }
                             }
                             break;
                     }
                 }
-                
-                Thread.Sleep(2000);
-            }  
+
+                Thread.Sleep(1000);
+            }
         }
 
-        static void Test()
+        /// <summary>
+        /// Makes 5 async requests
+        /// Makes 5 sync requests
+        /// Stop all requests with FileLinesCheckerWithQueue.Cancel call
+        /// Makes 5 async requests
+        /// Makes 5 sync requests
+        /// Reset FileLinesCheckerWithQueue instance
+        /// Makes 5 async requests
+        /// Makes 5 sync requests
+        /// Waits 1 sec
+        /// Dispose FileLinesCheckerWithQueue instance
+        /// </summary>
+        private static void LineTest()
         {
-            FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME);
+            // TODO: ? 
+            using (FileLinesCheckerWithQueue checker 
+                = new FileLinesCheckerWithQueue(FILE_NAME))
+            {
 
-            Console.WriteLine("  5 Async Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                AsyncRequest(checker);
-            }
-            Console.WriteLine("  5 Sync Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                SyncRequest(checker);
-            }
-            Console.WriteLine("  Cancel Requested");
-            checker.Cancel();
-            Console.WriteLine("  5 Async Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                AsyncRequest(checker);
-            }
-            Console.WriteLine("  5 Async Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                AsyncRequest(checker);
-            }
-            Console.WriteLine("  5 Sync Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                SyncRequest(checker);
-            }
+                Console.WriteLine("5 Async Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    AsyncRequest(checker);
+                }
+                Console.WriteLine("5 Sync Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    SyncRequest(checker);
+                }
 
-            Console.WriteLine("  Reset Requested");
-            checker.Reset();
-            Console.WriteLine("  5 Async Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                AsyncRequest(checker);
+                CancelChecker(checker);
+
+                Console.WriteLine("5 Async Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    AsyncRequest(checker);
+                }
+                Console.WriteLine("5 Sync Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    SyncRequest(checker);
+                }
+
+                ResetChecker(checker);
+
+                Console.WriteLine("5 Async Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    AsyncRequest(checker);
+                }
+                Console.WriteLine("5 Sync Requesting");
+                for (Int32 i = 0; i < 5; i++)
+                {
+                    SyncRequest(checker);
+                }
+
+                Thread.Sleep(1000);
+
             }
-            Console.WriteLine("  5 Sync Requested");
-            for (int i = 0; i < 5; i++)
-            {
-                SyncRequest(checker);
-            }
-            checker.Dispose();
 
         }
 
+        #endregion
+
+        /// <summary>
+        /// Entrance method
+        /// </summary>
+        /// <param name="args"></param>
+        private static void Main(String[] args)
+        {
+
+            RandomTest();
+            //LineTest();
+
+            Console.ReadLine();
+        }
 
     }
 }

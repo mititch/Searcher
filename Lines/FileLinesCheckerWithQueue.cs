@@ -22,32 +22,39 @@ namespace Lines
 
     public class FileLinesCheckerWithQueue : FileLinesCheckerBase, IDisposable
     {
-
+        #region fields
+        //
+        // fields
+        //
+        
         // Track whether Dispose has been called.
         private Boolean disposed = false;
         
-        // Helper object for threads locks which needed in taskQueue access
-        private object taskQueueLocker = new object();
+        // Helper object for the requests queue access lock
+        private Object taskQueueLocker = new Object();
 
         // Async requests queue
-        Queue<AsyncRequest> tasksQueue = new Queue<AsyncRequest>();
-        
+        private Queue<AsyncRequest> tasksQueue = new Queue<AsyncRequest>();
+
+        #endregion
+
+        #region constructors
+        //
+        // constructors
+        //
+
         /// <summary>
         /// Creates an instance 
         /// </summary>
         /// <param name="fileName">Name of file</param>
         public FileLinesCheckerWithQueue(String fileName) : base(fileName)
         {
-            // Create and run new worker thread
+            // Create and run new worker thread for the requests processing
             ThreadPool.QueueUserWorkItem(ProcessRequests);
             
         }
 
-        ~FileLinesCheckerWithQueue()
-        {
-            Dispose(false);
-        }
-
+        #endregion
 
         #region IDispose implementation
         //
@@ -67,20 +74,31 @@ namespace Lines
 
         #endregion
 
+        #region FileLinesCheckerBase overrides
+        //
+        // FileLinesCheckerBase overrides
+        //
+
         /// <summary>
         /// Check is line contains in the file asynchronously
         /// </summary>
         /// <param name="line">Line for check</param>
         /// <param name="onSuccess">Executed after success check<</param>
         /// <param name="onFailure">Executed if check can not be processed</param>
-        public override void ContainsAsync(string line,
-                                           Action<bool> onSuccess,
-                                           Action<string> onFailure)
+        public override void ContainsAsync(String line,
+                                           Action<Boolean> onSuccess,
+                                           Action<String> onFailure)
         {
-            // Add task to the execution queue
+            // Add new task to the execution queue
             EnqueueTask(new AsyncRequest(line, onSuccess, onFailure));
         }
 
+        #endregion
+
+        #region methods
+        //
+        // methods
+        //
 
         ///<summary>
         /// Central method for cleaning up resources
@@ -109,9 +127,10 @@ namespace Lines
         /// <summary>
         /// Add new task to async requests queue
         /// </summary>
-        /// <param name="task">Async request parameters</param>
+        /// <param name="task">AsyncRequest object</param>
         private void EnqueueTask(AsyncRequest task)
         {
+            // Lock the queue access
             lock (this.taskQueueLocker)
             {
                 // Add task to queue
@@ -124,9 +143,9 @@ namespace Lines
         }
 
         /// <summary>
-        ///  Executes a request callcack in the new thread
+        ///  Prepares a result and executes a request callcack in the new thread
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">AsyncRequest object</param>
         private void ProcessAsyncRequest(AsyncRequest request)
         {
             lock (this.dataLocker)
@@ -140,22 +159,50 @@ namespace Lines
                 // If instance can return the answer
                 if (this.state == FileLinesCheckerState.Ready)
                 {
+
+                    // Save check result 
+                    request.Result = this.data.Contains(request.Line);
                     // Request success callback execution
-                    ThreadPool.QueueUserWorkItem((result) => request.SuccessCallback((Boolean)result),
-                        this.data.Contains(request.Line));
+                    ThreadPool.QueueUserWorkItem(SuccessCallbackExecutor,
+                        request);
                 }
                 else
                 {
+                    // Save error message
+                    request.Result = this.state.ToString();
                     // Request failure callback execution
-                    ThreadPool.QueueUserWorkItem((result) => request.FailureCallback((String)result),
-                        this.state.ToString());
+                    ThreadPool.QueueUserWorkItem(FailureCallbackExecutor,
+                        request);
                 }
             }
         }
 
         /// <summary>
-        /// Checks is queue contains request and process him
+        /// Executes a success callback
         /// </summary>
+        /// <param name="object">AsyncRequest object</param>
+        private void SuccessCallbackExecutor(Object @object) 
+        {
+            AsyncRequest request = @object as AsyncRequest;
+
+            request.SuccessCallback((Boolean)request.Result);
+        }
+
+        /// <summary>
+        /// Executes a failure callback
+        /// </summary>
+        /// <param name="object">AsyncRequest object</param>
+        private void FailureCallbackExecutor(Object @object)
+        {
+            AsyncRequest request = @object as AsyncRequest;
+
+            request.FailureCallback((String)request.Result);
+        }
+
+        /// <summary>
+        /// Checks is queue contains request in loop and process request
+        /// </summary>
+        /// <param name="notUsed">Not used</param>
         private void ProcessRequests(Object notUsed)
         {
             // Execute while object is not disposed
@@ -164,16 +211,16 @@ namespace Lines
                 AsyncRequest task = null;
 
                 // Lock task queue
-                lock (taskQueueLocker)
+                lock (this.taskQueueLocker)
                 {
                     // If no requests is queue wait for task
-                    if (tasksQueue.Count == 0)
+                    if (this.tasksQueue.Count == 0)
                     {
-                        Monitor.Wait(taskQueueLocker);
+                        Monitor.Wait(this.taskQueueLocker);
                     }
 
                     // Get task from queue
-                    task = tasksQueue.Dequeue();
+                    task = this.tasksQueue.Dequeue();
                 }
                 
                 if (task != null)
@@ -186,10 +233,22 @@ namespace Lines
                     // Empty task instruct for stop working
                     return;
                 }
-
             }
-
         }
+
+        #endregion
+
+        #region finalizer
+        //
+        // finalizer
+        //
+
+        ~FileLinesCheckerWithQueue()
+        {
+            Dispose(false);
+        }
+
+        #endregion
 
     }
 
