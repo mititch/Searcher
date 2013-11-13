@@ -127,12 +127,14 @@ namespace Lines
         }
 
         /// <summary>
-        /// Method must check is line contains in the file asynchronously
+        /// Implementation must check is line contains in the file asynchronously
         /// </summary>
         /// <param name="line">Line for check</param>
         /// <param name="onSuccess">Executed after success check</param>
-        /// <param name="onFailure">Ecexuted if check can not be processed</param>
-        public abstract void ContainsAsync(String line, Action<Boolean> onSuccess, Action<String> onFailure);
+        /// <param name="onFailure">Executed if check can not be processed</param>
+        public abstract void ContainsAsync(String line,
+                                           Action<Boolean> onSuccess,
+                                           Action<String> onFailure);
 
         /// <summary>
         /// Request storage update
@@ -157,9 +159,9 @@ namespace Lines
         /// <param name="notUsed">Not used parameter</param>
         private void LoadData(Object notUsed)
         {
-
             LinesReader threadReader = new LinesReader();
 
+            // Stop previous LinesReader execution
             lock (this.dataLocker)
             {
                 if (this.state == FileLinesCheckerState.Pending)
@@ -177,6 +179,7 @@ namespace Lines
                 this.linesReader = threadReader;
             }
 
+            // Get new data from LinesReader
             IDictionary newData = null;
             try
             {
@@ -192,6 +195,7 @@ namespace Lines
                 // An unhandled exception causes to the program crach
             }
 
+            // If process was not canseled - update the data
             lock (dataLocker)
             {
                 // If the load process was not canceled or changed with another one
@@ -228,8 +232,12 @@ namespace Lines
                     state));
         }
 
-
         #endregion
+
+        #region nested types
+        //
+        // nested types
+        //
 
         /// <summary>
         /// Represents FileLinesChecker instance state
@@ -242,12 +250,12 @@ namespace Lines
             Ready,
             // Some error with storage update
             Error,
-            // Request execution canceled
+            // All requests will be canceled
             Canceled
         }
 
         /// <summary>
-        /// Incapsulates async request data
+        /// Incapsulates the async requests data
         /// </summary>
         protected class AsyncRequest
         {
@@ -262,7 +270,7 @@ namespace Lines
             private String line;
 
             /// <summary>
-            /// 
+            /// Creates an instance
             /// </summary>
             /// <param name="line">Line for check</param>
             /// <param name="sucessCallback">Success callback delegate</param>
@@ -274,24 +282,33 @@ namespace Lines
                 this.failureCallback = failureCallback;
             }
 
-            // Get success callback
+            /// <summary>
+            /// Provides access to the success callback
+            /// </summary>
             public Action<Boolean> SuccessCallback
             {
                 get { return this.successCallback; }
             }
 
-            // Get failure callback
+            /// <summary>
+            /// Provides access to the failure callback
+            /// </summary>
             public Action<String> FailureCallback
             {
                 get { return this.failureCallback; }
             }
 
-            // Get requested line callback
+            /// <summary>
+            /// Provides access to the requested line
+            /// </summary>
             public String Line
             {
                 get { return this.line; }
             }
 
         }
+
+        #endregion
+
     }
 }

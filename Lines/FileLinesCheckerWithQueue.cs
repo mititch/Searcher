@@ -4,8 +4,8 @@
 // </copyright>
 //
 // <summary>
-//    Instance can read lines from stream
-//    and generate dictionary which contains existing lines
+//    Makes search for the line in file
+//    Uses queue as the async requests storage    
 // </summary>
 //
 // <author email="mititch@softerra.com">Alex Mitin</author>
@@ -60,21 +60,19 @@ namespace Lines
         public void Dispose()
         {
             // Call internal Dispose(bool)
-            this.Dispose(true);
+            Dispose(true);
             // Prevent the destructor from being called
             GC.SuppressFinalize(this);
         }
 
         #endregion
 
-
-
         /// <summary>
-        /// Check line exist async
+        /// Check is line contains in the file asynchronously
         /// </summary>
-        /// <param name="line">Line to check</param>
-        /// <param name="onSuccess"></param>
-        /// <param name="onFailure"></param>
+        /// <param name="line">Line for check</param>
+        /// <param name="onSuccess">Executed after success check<</param>
+        /// <param name="onFailure">Executed if check can not be processed</param>
         public override void ContainsAsync(string line,
                                            Action<bool> onSuccess,
                                            Action<string> onFailure)
@@ -99,20 +97,14 @@ namespace Lines
                     // Set all request as canceled, stop data loading
                     Cancel();
 
-                    // Notify worker thread for stop working
-                    lock (taskQueueLocker) 
-                    {
-                        Monitor.Pulse(taskQueueLocker);
-                    }
+                    // Empty task instruct worker for stop working 
+                    EnqueueTask(null);
                 }
                 // Always release or cleanup (any) unmanaged resources
             }
 
-            // This effect worker loop
             this.disposed = true;
-            //Monitor.Pulse(taskQueueLocker);
         }
-
 
         /// <summary>
         /// Add new task to async requests queue
@@ -120,42 +112,41 @@ namespace Lines
         /// <param name="task">Async request parameters</param>
         private void EnqueueTask(AsyncRequest task)
         {
-            lock (taskQueueLocker)
+            lock (this.taskQueueLocker)
             {
                 // Add task to queue
-                tasksQueue.Enqueue(task);
+                this.tasksQueue.Enqueue(task);
                 
                 // Notify worker about new request
-                Monitor.Pulse(taskQueueLocker);
+                Monitor.Pulse(this.taskQueueLocker);
             }
 
         }
 
         /// <summary>
-        /// Execute request callcack in new thread
+        ///  Executes a request callcack in the new thread
         /// </summary>
         /// <param name="request"></param>
         private void ProcessAsyncRequest(AsyncRequest request)
         {
-            lock (dataLocker)
+            lock (this.dataLocker)
             {
-                // If instance waits for new data
+                // If instance is waits for new data
                 if (this.state == FileLinesCheckerState.Pending)
                 {
-                    //Wait new data
-                    Monitor.Wait(dataLocker);
+                    Monitor.Wait(this.dataLocker);
                 }
 
                 // If instance can return the answer
                 if (this.state == FileLinesCheckerState.Ready)
                 {
-                    // Request callback execution
+                    // Request success callback execution
                     ThreadPool.QueueUserWorkItem((result) => request.SuccessCallback((Boolean)result),
                         this.data.Contains(request.Line));
                 }
                 else
                 {
-                    // Request callback execution
+                    // Request failure callback execution
                     ThreadPool.QueueUserWorkItem((result) => request.FailureCallback((String)result),
                         this.state.ToString());
                 }
@@ -163,7 +154,7 @@ namespace Lines
         }
 
         /// <summary>
-        /// Checks is queue contains request and process it
+        /// Checks is queue contains request and process him
         /// </summary>
         private void ProcessRequests(Object notUsed)
         {
@@ -179,23 +170,21 @@ namespace Lines
                     if (tasksQueue.Count == 0)
                     {
                         Monitor.Wait(taskQueueLocker);
-
-                        // If object was disposed release thread
-                        if (this.disposed)
-                        {
-                            return;
-                        }
-                    
                     }
 
                     // Get task from queue
                     task = tasksQueue.Dequeue();
                 }
-
-                // If task exist process him
+                
                 if (task != null)
                 {
+                    // If task exist process him
                     ProcessAsyncRequest(task);
+                }
+                else
+                {
+                    // Empty task instruct for stop working
+                    return;
                 }
 
             }

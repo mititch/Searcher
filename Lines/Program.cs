@@ -11,7 +11,7 @@ namespace Lines
         /// <summary>
         /// File name
         /// </summary>
-        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf1.txt";
+        private const String FILE_NAME = "C:/Users/mititch/Downloads/bf11.txt";
 
         /// <summary>
         /// Common part of any line
@@ -81,64 +81,48 @@ namespace Lines
         static void Main(String[] args)
         {
 
-            Test();
+            RandomTest();
 
             Console.ReadLine();
         }
 
-
-        static void LoopTest()
-        {
-            FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME);
-            //SyncRequest(checker);
-            checker = null;
-            Thread.Sleep(4000);
-            //checker.Dispose();
-            
-            Console.WriteLine("Collect");
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            Thread.Sleep(1000);
-            Console.WriteLine("End");
-        }
-
+        /// <summary>
+        /// Makes 50 random calls to the FileLinesCheckerWithQueue methods
+        /// All calls requested from different threads
+        /// </summary>
         static void RandomTest()
         {
-            FileLinesCheckerBase checker = new FileLinesCheckerWithQueue(FILE_NAME);
-
-            for (int i = 0; i < 50; i++)
+            using (FileLinesCheckerWithQueue checker = new FileLinesCheckerWithQueue(FILE_NAME))
             {
-                switch (random.Next(10))
+
+                for (int i = 0; i < 50; i++)
                 {
-                    case 1:
-                        ResetAsync(checker);
-                        break;
+                    switch (random.Next(10))
+                    {
+                        case 1:
+                            ResetAsync(checker);
+                            break;
 
-                    case 2:
-                        CancelAsync(checker);
-                        break;
+                        case 2:
+                            CancelAsync(checker);
+                            break;
 
-                    default:
-                        {
-                            if (i % 2 == 1)
+                        default:
                             {
-                                AsyncSyncRequest(checker);
+                                if (i % 2 == 1)
+                                {
+                                    AsyncSyncRequest(checker);
+                                }
+                                else
+                                {
+                                    AsyncRequest(checker);
+                                }
                             }
-                            else
-                            {
-                                AsyncRequest(checker);
-                            }
-                        }
-                        break;
+                            break;
+                    }
                 }
+                
+                Thread.Sleep(2000);
             }  
         }
 
