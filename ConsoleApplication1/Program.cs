@@ -4,20 +4,22 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace ConsoleApplication1
 {
-    class MyTask
+    class MyWorker : BackgroundWorker
     {
-        Int32 i;
-        public MyTask()
+        
+        public MyWorker()
         {
-
+            
         }
 
-        private void csd() 
+        protected override void OnRunWorkerCompleted(RunWorkerCompletedEventArgs e)
         {
-
+            base.OnRunWorkerCompleted(e);
+            
         }
     }
     
